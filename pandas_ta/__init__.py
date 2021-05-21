@@ -80,6 +80,10 @@ Category = {
         "ad", "adosc", "aobv", "cmf", "efi", "eom", "mfi", "nvi", "obv", "pvi",
         "pvol", "pvr", "pvt"
     ],
+    # Custom Reluminos
+    "smart_trade": [
+        "candle_brick"
+    ]
 }
 
 CANGLE_AGG = {

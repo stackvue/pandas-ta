@@ -20,7 +20,7 @@ from pandas_ta.trend import *
 from pandas_ta.volatility import *
 from pandas_ta.volume import *
 from pandas_ta.utils import *
-
+from pandas_ta.smart_trade import *
 
 # Strategy DataClass
 @dataclass
@@ -1618,4 +1618,11 @@ class AnalysisIndicators(BasePandasObject):
         volume = self._get_column(kwargs.pop("volume", "volume"))
 
         result = vp(close=close, volume=volume, width=width, percent=percent, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def candle_brick(self, brick_size=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        volume = self._get_column(kwargs.pop("volume", "volume"))
+
+        result = candle_brick(close=close, volume=volume, brick_size=brick_size, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
