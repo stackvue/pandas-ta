@@ -5,7 +5,7 @@ from pandas_ta.utils import get_offset, verify_series
 
 
 def candle_brick(close, volume, brick_size=1, offset=None, **kwargs):
-    """Indicator: Archer On Balance Volume (AOBV)"""
+    """Indicator: Candle Bricks (candle_brick)"""
     # Validate arguments
     close = verify_series(close)
     volume = verify_series(volume)
@@ -13,7 +13,7 @@ def candle_brick(close, volume, brick_size=1, offset=None, **kwargs):
 
     close_diff = close.diff()
     bricks = close_diff / close
-    bricks_count = bricks.abs().floordiv(brick_size) * bricks / bricks.abs()
+    bricks_count = bricks.abs().floordiv(brick_size / 100) * bricks / bricks.abs()
     bricks_count = bricks_count.fillna(0).astype(int)
 
     brick_number = bricks_count.groupby(pd.Grouper(freq='D')).cumsum()
