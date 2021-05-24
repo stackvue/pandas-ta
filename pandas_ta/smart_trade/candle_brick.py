@@ -14,7 +14,8 @@ def candle_brick(close, volume, brick_size=1, offset=None, **kwargs):
     close_diff = close.diff()
     bricks = close_diff / close
     bricks_count = bricks.abs().floordiv(brick_size) * bricks / bricks.abs()
-    bricks_count.fillna(0, inplace=True)
+    bricks_count = bricks_count.fillna(0).astype(int)
+
     brick_number = bricks_count.groupby(pd.Grouper(freq='D')).cumsum()
     brick_id = bricks_count.abs().groupby(pd.Grouper(freq='D')).cumsum()
     brick_id.name = "brick_id"
