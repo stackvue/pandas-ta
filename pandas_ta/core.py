@@ -20,6 +20,7 @@ from pandas_ta.trend import *
 from pandas_ta.volatility import *
 from pandas_ta.volume import *
 from pandas_ta.utils import *
+from pandas_ta.smart_trade import *
 
 
 # Strategy DataClass
@@ -1011,6 +1012,12 @@ class AnalysisIndicators(BasePandasObject):
 
         result = hilo(high=high, low=low, close=close, high_length=high_length, low_length=low_length, mamode=mamode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
+
+    def hilo_band(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = hilo_band(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
 
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
