@@ -15,6 +15,15 @@ def hilo_band(close, offset=None, **kwargs):
     close_before = close.shift(1)
     close_after = close.shift(-1)
 
+    is_plateau = (close == close_before)
+    close_before = close_before.mask(is_plateau)
+
+    is_plateau = (close == close_after)
+    close_after = close_after.mask(is_plateau)
+
+    close_before.fillna(inplace=True, method='ffill')
+    close_after.fillna(inplace=True, method='bfill')
+
     is_high = (close_before < close) & (close_after < close)
     is_low = (close_before > close) & (close_after > close)
 
