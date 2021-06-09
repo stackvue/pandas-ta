@@ -15,11 +15,13 @@ def hilo_band(close, offset=None, **kwargs):
     close_before = close.shift(1)
     close_after = close.shift(-1)
 
-    is_plateau = (close == close_before)
-    close_before = close_before.mask(is_plateau)
+    is_before_plateau = (close == close_before)
+    close_before = close_before.mask(is_before_plateau)
 
-    is_plateau = (close == close_after)
-    close_after = close_after.mask(is_plateau)
+    is_after_plateau = (close == close_after)
+    close_after = close_after.mask(is_after_plateau)
+
+    is_plateau = is_after_plateau | is_before_plateau
 
     close_before.fillna(inplace=True, method='ffill')
     close_after.fillna(inplace=True, method='bfill')
@@ -27,8 +29,14 @@ def hilo_band(close, offset=None, **kwargs):
     is_high = (close_before < close) & (close_after < close)
     is_low = (close_before > close) & (close_after > close)
 
-    high_band = close.where(is_high)
-    low_band = close.where(is_low)
+    high_band = close.where(is_high).shift(1)
+    low_band = close.where(is_low).shift(1)
+
+    high_band.fillna(inplace=True, method='ffill')
+    low_band.fillna(inplace=True, method='ffill')
+
+    high_band = high_band.mask(is_plateau)
+    low_band = low_band.mask(is_plateau)
 
     high_band.fillna(inplace=True, method='ffill')
     low_band.fillna(inplace=True, method='ffill')
