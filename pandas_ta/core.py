@@ -1388,8 +1388,8 @@ class AnalysisIndicators(BasePandasObject):
         return self._post_process(result, **kwargs)
 
     def cross(self, above=True, asint=True, offset=None, **kwargs):
-        a = self._get_column(kwargs.pop("close", "a"))
-        b = self._get_column(kwargs.pop("close", "b"))
+        a = self._get_column(kwargs.pop("a", "a"))
+        b = self._get_column(kwargs.pop("b", "b"))
         result = cross(series_a=a, series_b=b, above=above, asint=asint, offset=offset, **kwargs)
         # self._add_prefix_suffix(result, **kwargs)
         # self._append(result, **kwargs)
