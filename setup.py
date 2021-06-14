@@ -16,7 +16,8 @@ setup(
         "pandas_ta.trend",
         "pandas_ta.utils",
         "pandas_ta.volatility",
-        "pandas_ta.volume"
+        "pandas_ta.volume",
+        "pandas_ta.smart_trade"
     ],
     version=".".join(("0", "2", "45b")),
     description=long_description,

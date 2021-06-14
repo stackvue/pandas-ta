@@ -80,6 +80,11 @@ Category = {
         "ad", "adosc", "aobv", "cmf", "efi", "eom", "mfi", "nvi", "obv", "pvi",
         "pvol", "pvr", "pvt"
     ],
+
+    # SmartTrade, "smart-trade" or "Smart Trade" is unique
+    "smart-trade": [
+        "hilo_band"
+    ],
 }
 
 CANGLE_AGG = {
