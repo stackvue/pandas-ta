@@ -1018,6 +1018,11 @@ class AnalysisIndicators(BasePandasObject):
         result = hilo_band(close=close, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def rate(self, length=None, offset=None, accumulate=False, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        base = self._get_column(kwargs.pop("base", "candle_time"))
+        result = rate(close=close, base=base, length=length, offset=offset, accumulate=accumulate, **kwargs)
+        return self._post_process(result, **kwargs)
 
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))

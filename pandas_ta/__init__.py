@@ -83,7 +83,7 @@ Category = {
 
     # SmartTrade, "smart-trade" or "Smart Trade" is unique
     "smart-trade": [
-        "hilo_band"
+        "hilo_band", "rate"
     ],
 }
 
