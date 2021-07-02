@@ -21,9 +21,10 @@ def cpr(high, low, close, offset, **kwargs):
 
     cpr_dict = {}
     for day, row in cpr_df.iterrows():
-        cpr_dict[day.date()] = {"pivot": row["pivot"],
-                                  "bottom_cpr": row["bottom_cpr"],
-                                  "top_cpr": row["top_cpr"]}
+        cpr_list = sorted([row["pivot"], row["bottom_cpr"], row["top_cpr"]])
+        cpr_dict[day.date()] = {"pivot": cpr_list[1],
+                                "bottom_cpr": cpr_list[0],
+                                "top_cpr": cpr_list[2]}
 
     df = DataFrame({"close": close})
     df["Pivot"] = df.apply(lambda row: cpr_dict[row.name.date()]["pivot"], axis=1)
