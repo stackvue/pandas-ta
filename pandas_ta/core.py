@@ -1024,6 +1024,13 @@ class AnalysisIndicators(BasePandasObject):
         result = rate(close=close, base=base, length=length, offset=offset, accumulate=accumulate, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def cpr(self, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = cpr(high=high, low=low, close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
