@@ -1031,6 +1031,11 @@ class AnalysisIndicators(BasePandasObject):
         result = cpr(high=high, low=low, close=close, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def option_chain(self, step=None, step_count=0, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = option_chain(close=close, step=step, step_count=step_count, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
