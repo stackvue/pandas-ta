@@ -4,7 +4,7 @@ from pandas import DataFrame
 from pandas_ta.utils import get_offset, verify_series
 
 
-def option_chain(close, step, step_count, offset=None, **kwargs):
+def oc(close, step, step_count, offset=None, **kwargs):
     """Indicator: Option Chain (OPTION_CHAIN)"""
     # Validate Arguments
     close = verify_series(close)
@@ -60,18 +60,18 @@ def option_chain(close, step, step_count, offset=None, **kwargs):
     return df
 
 
-option_chain.__doc__ = \
-"""HILO BAND (HILO_BAND)
+oc.__doc__ = \
+"""OPTION CHAIN (OPTION_CHAIN)
 
-HILO BAND (HILO_BAND).
+OPTION CHAIN (OPTION_CHAIN).
 
 Sources:
     https://smart-trade.stackvue.com
 
 Calculation:
-    at_the_money = step * round(close/step)            
+    at_the_money = step * round(close/step)
     plus_i = at_the_money + step * i
-    minus_i = at_the_money - step * i            
+    minus_i = at_the_money - step * i
 
 Args:
     close (pd.Series): Series of 'close's
