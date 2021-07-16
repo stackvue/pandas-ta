@@ -27,10 +27,10 @@ def hilo_zone(close, size, offset=None, **kwargs):
         df.loc[index, "HILO_ZONE_HIGH"] = upper
         df.loc[index, "HILO_ZONE_LOW"] = lower
         if not lower < row["close"] < upper:
-            df.loc[index, "HILO_ZONE_BREAK"] = True
+            df.loc[index, "HILO_ZONE_BREAK"] = 1 if row["close"] >= upper else -1
             upper, lower = row["close"] + size, row["close"] - size
         else:
-            df.loc[index, "HILO_ZONE_BREAK"] = False
+            df.loc[index, "HILO_ZONE_BREAK"] = 0
 
     # Offset
     if offset != 0:
