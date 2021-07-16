@@ -4,7 +4,7 @@ from pandas import DataFrame
 from pandas_ta.utils import get_offset, verify_series
 
 
-def hilo_zone(close, size, offset=None, **kwargs):
+def hlz(close, size, offset=None, **kwargs):
     """Indicator: HILO_ZONE (HILO_ZONE)"""
     # Validate Arguments
     close = verify_series(close)
@@ -24,36 +24,36 @@ def hilo_zone(close, size, offset=None, **kwargs):
             upper, lower = prev_close + size, prev_close - size
         prev_close = row["close"]
         prev_date = index.date()
-        df.loc[index, "HILO_ZONE_HIGH"] = upper
-        df.loc[index, "HILO_ZONE_LOW"] = lower
+        df.loc[index, "HLZ_HIGH"] = upper
+        df.loc[index, "HLZ_LOW"] = lower
         if not lower < row["close"] < upper:
-            df.loc[index, "HILO_ZONE_BREAK"] = 1 if row["close"] >= upper else -1
+            df.loc[index, "HLZ_BREAK"] = 1 if row["close"] >= upper else -1
             upper, lower = row["close"] + size, row["close"] - size
         else:
-            df.loc[index, "HILO_ZONE_BREAK"] = 0
+            df.loc[index, "HLZ_BREAK"] = 0
 
     # Offset
     if offset != 0:
-        df["HILO_ZONE_HIGH"] = df["HILO_ZONE_HIGH"].shift(offset)
-        df["HILO_ZONE_LOW"] = df["HILO_ZONE_LOW"].shift(offset)
-        df["HILO_ZONE_BREAK"] = df["HILO_ZONE_BREAK"].shift(offset)
+        df["HLZ_HIGH"] = df["HLZ_HIGH"].shift(offset)
+        df["HLZ_LOW"] = df["HLZ_LOW"].shift(offset)
+        df["HLZ_BREAK"] = df["HLZ_BREAK"].shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:
-        df["HILO_ZONE_HIGH"].fillna(kwargs["fillna"], inplace=True)
-        df["HILO_ZONE_LOW"].fillna(kwargs["fillna"], inplace=True)
-        df["HILO_ZONE_BREAK"].fillna(kwargs["fillna"], inplace=True)
+        df["HLZ_HIGH"].fillna(kwargs["fillna"], inplace=True)
+        df["HLZ_LOW"].fillna(kwargs["fillna"], inplace=True)
+        df["HLZ_BREAK"].fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        df["HILO_ZONE_HIGH"].fillna(method=kwargs["fill_method"], inplace=True)
-        df["HILO_ZONE_LOW"].fillna(method=kwargs["fill_method"], inplace=True)
-        df["HILO_ZONE_BREAK"].fillna(method=kwargs["fill_method"], inplace=True)
+        df["HLZ_HIGH"].fillna(method=kwargs["fill_method"], inplace=True)
+        df["HLZ_LOW"].fillna(method=kwargs["fill_method"], inplace=True)
+        df["HLZ_BREAK"].fillna(method=kwargs["fill_method"], inplace=True)
 
-    df["HILO_ZONE_HIGH"].category = df["HILO_ZONE_LOW"].category = df["HILO_ZONE_BREAK"].category = "smart-trade"
+    df["HLZ_HIGH"].category = df["HLZ_LOW"].category = df["HLZ_BREAK"].category = "smart-trade"
     df.drop('close', axis=1, inplace=True)
     return df
 
 
-hilo_zone.__doc__ = \
+hlz.__doc__ = \
 """HILO ZONE (HILO_ZONE)
 
 HILO ZONE (HILO_ZONE).
@@ -75,5 +75,5 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.DataFrame: HILO_ZONE_HIGH (line), HILO_ZONE_LOW (line), HILO_ZONE_BREAK (line) columns.
+    pd.DataFrame: HLZ_HIGH (line), HLZ_LOW (line), HLZ_BREAK (line) columns.
 """
