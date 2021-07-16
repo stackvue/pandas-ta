@@ -1036,6 +1036,11 @@ class AnalysisIndicators(BasePandasObject):
         result = oc(close=close, step=step, step_count=step_count, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def hilo_zone(self, size=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = hilo_zone(close=close, size=size, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
