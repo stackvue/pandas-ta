@@ -27,10 +27,13 @@ def hlz(close, size, offset=None, **kwargs):
         df.loc[index, "HLZ_HIGH"] = upper
         df.loc[index, "HLZ_LOW"] = lower
         if not lower < row["close"] < upper:
-            df.loc[index, "HLZ_BREAK"] = 1 if row["close"] >= upper else -1
+            df.loc[index, "HLZ_ZONE"] = df.loc[index, "HLZ_BREAK"] = 1 if row["close"] >= upper else -1
             upper, lower = row["close"] + size, row["close"] - size
         else:
             df.loc[index, "HLZ_BREAK"] = 0
+
+    df["HLZ_ZONE"].fillna(inplace=True, method='ffill')
+    df["HLZ_ZONE"].fillna(0, inplace=True)
 
     # Offset
     if offset != 0:
@@ -75,5 +78,5 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.DataFrame: HLZ_HIGH (line), HLZ_LOW (line), HLZ_BREAK (line) columns.
+    pd.DataFrame: HLZ_HIGH (line), HLZ_LOW (line), HLZ_BREAK (line), HLZ_ZONE (line) columns.
 """
