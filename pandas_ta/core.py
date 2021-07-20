@@ -1036,9 +1036,9 @@ class AnalysisIndicators(BasePandasObject):
         result = oc(close=close, step=step, step_count=step_count, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def hlz(self, u_bound=None, l_bound=None, offset=None, **kwargs):
+    def hlz(self, u_bound=None, l_bound=None, mode=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
-        result = hlz(close=close, u_bound=u_bound, l_bound=l_bound, offset=offset, **kwargs)
+        result = hlz(close=close, u_bound=u_bound, l_bound=l_bound, mode=mode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def hl2(self, offset=None, **kwargs):
