@@ -4,11 +4,19 @@ from pandas import DataFrame
 from pandas_ta.utils import get_offset, verify_series
 
 
-def hlz(close, u_bound, l_bound, offset=None, **kwargs):
+def prepare_boundary(close, mode, u_bound, l_bound):
+    if mode == "abs":
+        return close + u_bound, close - l_bound
+    else:
+        return close * (1 + u_bound / 100 ), close * (1 - l_bound / 100)
+
+def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
     """Indicator: HILO_ZONE (HILO_ZONE)"""
     # Validate Arguments
     close = verify_series(close)
     offset = get_offset(offset)
+
+    mode = mode or "abs"
 
     # Prepare DataFrame to return
     df = DataFrame({"close": close})
@@ -16,22 +24,25 @@ def hlz(close, u_bound, l_bound, offset=None, **kwargs):
     df.category = "smart-trade"
 
     prev_date = close.first_valid_index().date()
-    upper, lower = close.iloc[0] + u_bound, close.iloc[0] - l_bound
+    upper, lower = prepare_boundary(close.iloc[0], mode, u_bound, l_bound)
     prev_close = close.iloc[0]
-
+    add_zone = True
     for index, row in df.iterrows():
         if index.date() != prev_date:
-            upper, lower = prev_close + u_bound, prev_close - l_bound
+            upper, lower = prepare_boundary(prev_close, mode, u_bound, l_bound)
         prev_close = row["close"]
         prev_date = index.date()
         df.loc[index, "HLZ_HIGH"] = upper
         df.loc[index, "HLZ_LOW"] = lower
         if not lower < row["close"] < upper:
+            add_zone = False
             df.loc[index, "HLZ_ZONE"] = df.loc[index, "HLZ_BREAK"] = 1 if row["close"] >= upper else -1
-            upper, lower = row["close"] + u_bound, row["close"] - l_bound
+            upper, lower = prepare_boundary(row["close"], mode, u_bound, l_bound)
         else:
             df.loc[index, "HLZ_BREAK"] = 0
 
+    if add_zone:
+        df["HLZ_ZONE"] = 0
     df["HLZ_ZONE"].fillna(inplace=True, method='ffill')
     df["HLZ_ZONE"].fillna(0, inplace=True)
 
@@ -73,6 +84,7 @@ Args:
     u_bound (float): Upper Bound of zone to be created
     l_bound (float): Lower Bound of zone to be created
     offset (int): How many periods to offset the result. Default: 0
+    mode (abs/pct): bound type (Absolute or pct), default abs
 
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
