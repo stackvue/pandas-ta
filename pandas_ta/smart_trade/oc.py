@@ -15,7 +15,7 @@ def oc(close, step, step_count, offset=None, **kwargs):
 
     # Calculate Result
 
-    at_the_money = close.apply(lambda row: step * round(row/step))
+    at_the_money = close.fillna(method='bfill').apply(lambda row: step * round(row/step))
     if offset != 0:
         at_the_money = at_the_money.shift(offset)
     if "fillna" in kwargs:
