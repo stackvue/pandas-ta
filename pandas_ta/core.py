@@ -365,6 +365,8 @@ class AnalysisIndicators(BasePandasObject):
             na_columns = self._check_na_columns()
             if df is None or result is None: return
             else:
+                multi_index_prefix = kwargs.get("multi_index_prefix") or []
+                multi_index_suffix = kwargs.get("multi_index_suffix") or []
                 if isinstance(result, pd.DataFrame):
                     # If specified in kwargs, rename the columns. If not, use
                     # the default names.
@@ -372,7 +374,8 @@ class AnalysisIndicators(BasePandasObject):
                             kwargs["col_names"], tuple):
                         if len(kwargs["col_names"]) >= len(result.columns):
                             for col, ind_name in zip(result.columns, kwargs["col_names"]):
-                                df[ind_name] = result.loc[:, col]
+                                col_name = tuple((multi_index_prefix or []) + [ind_name] + (multi_index_suffix or []))
+                                df[col_name] = result.loc[:, col]
                         else:
                             print(
                                 f"Not enough col_names were specified : got {len(kwargs['col_names'])}, expected {len(result.columns)}."
@@ -380,12 +383,14 @@ class AnalysisIndicators(BasePandasObject):
                             return
                     else:
                         for i, column in enumerate(result.columns):
-                            df[column] = result.iloc[:, i]
+                            col_name = tuple((multi_index_prefix or []) + [column] + (multi_index_suffix or []))
+                            df[col_name] = result.iloc[:, i]
                 else:
                     ind_name = (
                         kwargs["col_names"][0] if "col_names" in kwargs and
                         isinstance(kwargs["col_names"], tuple) else result.name)
-                    df[ind_name] = result
+                    col_name = tuple((multi_index_prefix or []) + [ind_name] + (multi_index_suffix or []))
+                    df[col_name] = result
 
     def _check_na_columns(self, stdout: bool = True):
         """Returns the columns in which all it's values are na."""
@@ -403,6 +408,9 @@ class AnalysisIndicators(BasePandasObject):
         # Apply default if no series nor a default.
         elif series is None:
             return df[self.adjusted] if self.adjusted is not None else None
+        # Ok.  So it's a multiindex.
+        elif isinstance(series, list):
+            return df[tuple(series)]
         # Ok.  So it's a str.
         elif isinstance(series, str):
             # Return the df column since it's in there.
