@@ -36,7 +36,9 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
         df.loc[index, "HLZ_LOW"] = lower
         if not lower < row["close"] < upper:
             add_zone = False
-            df.loc[index, "HLZ_ZONE"] = df.loc[index, "HLZ_BREAK"] = 1 if row["close"] >= upper else -1
+            value = 1 if row["close"] >= upper else -1
+            df.loc[index, "HLZ_BREAK"] = value
+            df.loc[index, "HLZ_ZONE"] = value
             upper, lower = prepare_boundary(row["close"], mode, u_bound, l_bound)
         else:
             df.loc[index, "HLZ_BREAK"] = 0
