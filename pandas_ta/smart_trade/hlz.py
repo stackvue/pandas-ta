@@ -17,7 +17,7 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
     offset = get_offset(offset)
 
     mode = mode or "abs"
-    decay = kwargs.get("decay", 0) / 100
+    decay = kwargs.get("decay", 0)
     u_decay = kwargs.get("u_decay", decay) / 100
     l_decay = kwargs.get("l_decay", decay) / 100
 
