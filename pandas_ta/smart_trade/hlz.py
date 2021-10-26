@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-from pandas import DataFrame
+from pandas import DataFrame, Grouper
 
 from pandas_ta.utils import get_offset, verify_series
 
 
 def prepare_boundary(close, mode, u_bound, l_bound):
     if mode == "abs":
-        return close + u_bound, close - l_bound
+        return u_bound, l_bound
     else:
-        return close * (1 + u_bound / 100 ), close * (1 - l_bound / 100)
+        return close * u_bound / 100 , close * l_bound / 100
 
 def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
     """Indicator: HILO_ZONE (HILO_ZONE)"""
@@ -17,6 +17,9 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
     offset = get_offset(offset)
 
     mode = mode or "abs"
+    decay = kwargs.get("decay", 0) / 100
+    u_decay = kwargs.get("u_decay", decay) / 100
+    l_decay = kwargs.get("l_decay", decay) / 100
 
     # Prepare DataFrame to return
     df = DataFrame({"close": close})
@@ -24,28 +27,33 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
     df.category = "smart-trade"
 
     prev_date = close.first_valid_index().date()
-    upper, lower = prepare_boundary(close.iloc[0], mode, u_bound, l_bound)
-    prev_close = close.iloc[0]
+    upper_delta, lower_delta = prepare_boundary(close.iloc[0], mode, u_bound, l_bound)
+    broken_close = prev_close = close.iloc[0]
     add_zone = True
     for index, row in df.iterrows():
         if index.date() != prev_date:
-            upper, lower = prepare_boundary(prev_close, mode, u_bound, l_bound)
+            upper_delta, lower_delta  = prepare_boundary(prev_close, mode, u_bound, l_bound)
+            broken_close = prev_close
         prev_close = row["close"]
         prev_date = index.date()
-        df.loc[index, "HLZ_HIGH"] = upper
-        df.loc[index, "HLZ_LOW"] = lower
+        upper_delta *= (1-u_decay)
+        lower_delta *= (1-l_decay)
+        upper = df.loc[index, "HLZ_HIGH"] = broken_close + upper_delta
+        lower = df.loc[index, "HLZ_LOW"] = broken_close - lower_delta
         if not lower < row["close"] < upper:
             add_zone = False
             value = 1 if row["close"] >= upper else -1
             df.loc[index, "HLZ_BREAK"] = value
             df.loc[index, "HLZ_ZONE"] = value
-            upper, lower = prepare_boundary(row["close"], mode, u_bound, l_bound)
+            upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
+            broken_close = row["close"]
         else:
             df.loc[index, "HLZ_BREAK"] = 0
 
     if add_zone:
         df["HLZ_ZONE"] = 0
     df["HLZ_ZONE"].fillna(inplace=True, method='ffill')
+    df["HLZ_ZONE"] = df["HLZ_ZONE"].groupby(Grouper(freq='D')).fillna(method='bfill')
     df["HLZ_ZONE"].fillna(0, inplace=True)
 
     # Offset
