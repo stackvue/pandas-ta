@@ -1071,6 +1071,12 @@ class AnalysisIndicators(BasePandasObject):
         result = smart_trend(open_=open_, close=close, length=length, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def candle_type(self, offset=None, **kwargs):
+        open_ = self._get_column(kwargs.pop("open", "open"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = candle_type(open_=open_, close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
