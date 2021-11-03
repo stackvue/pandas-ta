@@ -1041,6 +1041,12 @@ class AnalysisIndicators(BasePandasObject):
         result = hlz(close=close, u_bound=u_bound, l_bound=l_bound, mode=mode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def smz(self, length=None, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        result = smz(high=high, low=low, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
