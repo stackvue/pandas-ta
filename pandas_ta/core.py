@@ -1047,6 +1047,11 @@ class AnalysisIndicators(BasePandasObject):
         result = smz(high=high, low=low, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def smv(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = smv(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
