@@ -6,3 +6,4 @@ from .oc import oc
 from .hlz import hlz
 from .smz import smz
 from .smv import smv
+from .smart_trend import smart_trend
