@@ -47,7 +47,7 @@ def smv(close, length=None, offset=None, **kwargs):
 smv.__doc__ = \
 """Simple Moving Volatility (SMV)
 
-The Simple Moving Zone is the classic moving high low zone over n periods.
+The Simple Moving Volatility is the classic moving high low zone over n periods.
 
 Sources:
     https://smart-trade.reluminos.com
@@ -67,5 +67,5 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.DataFrame: SMV (highzone)
+    pd.DataFrame: SMV (volatility)
 """
