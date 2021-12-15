@@ -10,14 +10,14 @@ def smart_trend(open_, close, length, **kwargs):
     length = int(length) if length and length > 0 else 10
 
     df = pd.DataFrame({
-        "st_open": open_,
-        "st_close": close
+        "st_open": open_
     })
 
     df["batch"] = df.groupby(pd.Grouper(freq='D')).cumcount() // length
     grouped = df.groupby([pd.Grouper(freq='D'), pd.Grouper('batch')])
     result = grouped.transform("first")
 
+    result["st_close"] = close
     result["st_trend"] = np.sign(result["st_close"] - result["st_open"])
     result["st_signal"] = np.sign(result["st_trend"] - result["st_trend"].shift())
     result.loc[result.first_valid_index(), "st_signal"] = result.iloc[0]["st_trend"]
