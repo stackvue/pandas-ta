@@ -14,17 +14,24 @@ def smart_trend(open_, close, length, **kwargs):
         "st_close": close
     })
 
-    df["batch"] = df.groupby(pd.Grouper(freq='D')).cumcount() // length
+    candle_number = df.groupby(pd.Grouper(freq='D')).cumcount()
+    df["batch"] = candle_number // length
+    block = ((candle_number % length) == 0).shift(-1)
     grouped = df.groupby([pd.Grouper(freq='D'), pd.Grouper('batch')])
-    result = grouped.transform("first")
+    df["st_open"] = grouped["st_open"].transform("first")
+    df["st_close"] = grouped["st_close"].transform("last")
 
-    result["st_trend"] = np.sign(result["st_close"] - result["st_open"])
-    result["st_signal"] = np.sign(result["st_trend"] - result["st_trend"].shift())
-    result.loc[result.first_valid_index(), "st_signal"] = result.iloc[0]["st_trend"]
+    df["st_open"] = df["st_open"].where(block).fillna(method='ffill')
+    df["st_close"] = df["st_close"].where(block).fillna(method='ffill')
 
-    result.name = "Smart_Trend"
-    result.category = "smart-trade"
-    return result
+    df["st_trend"] = np.sign(df["st_close"] - df["st_open"])
+    df["st_signal"] = np.sign(df["st_trend"] - df["st_trend"].shift())
+    df["st_signal"].fillna(df["st_trend"], inplace=True)
+
+    df.name = "Smart_Trend"
+    df.category = "smart-trade"
+    df.drop('batch', axis=1, inplace=True)
+    return df
 
 
 smart_trend.__doc__ = \
