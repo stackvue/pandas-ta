@@ -52,7 +52,7 @@ def hlb(high, low, start_candle=0, end_candle=0, offset=None, **kwargs):
     return df
 
 
-hlv.__doc__ = \
+hlb.__doc__ = \
 """HILO BLOCK (HILO_BLOCK)
 
 HILO BLOCK (HILO_BLOCK).
