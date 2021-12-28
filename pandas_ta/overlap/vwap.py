@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+
+import pandas as pd
 from .hlc3 import hlc3
 from pandas_ta.utils import get_offset, is_datetime_ordered, verify_series
 
@@ -11,12 +13,16 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
     volume = verify_series(volume)
     anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
     offset = get_offset(offset)
-
+    factor = kwargs.get("factor", 0)
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
         print(f"[!] VWAP volume series is not datetime ordered. Results may not be as expected.")
     if not is_datetime_ordered(typical_price):
         print(f"[!] VWAP price series is not datetime ordered. Results may not be as expected.")
+
+    if factor:
+        multiplier = ((volume.groupby(pd.Grouper(freq='D')).cumcount()) + 1) ** factor
+        volume = volume * multiplier
 
     # Calculate Result
     wp = typical_price * volume
