@@ -1058,6 +1058,13 @@ class AnalysisIndicators(BasePandasObject):
         result = smv(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def half_trend(self, length=None, atr_length=None, deviation=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = half_trend(close, high, low, length=length, atr_length=atr_length, deviation=deviation, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def smart_trend(self, length=None, **kwargs):
         open_ = self._get_column(kwargs.pop("open", "open"))
         close = self._get_column(kwargs.pop("close", "close"))
