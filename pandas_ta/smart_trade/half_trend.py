@@ -78,7 +78,7 @@ def half_trend(close, high, low, length=None, atr_length=None, deviation=None, o
             if prev_index and df["trend"].loc[prev_index] != 1:
                 df.loc[index, "down"] = down = df["up"].loc[prev_index] or up
             else:
-                df.loc[index, "down"] = up = min(minHighPrice, df["down"].loc[prev_index]) if prev_index and \
+                df.loc[index, "down"] = down = min(minHighPrice, df["down"].loc[prev_index]) if prev_index and \
                                                                                               df["down"].loc[
                                                                                                   prev_index] else minHighPrice
             df.loc[index, "atrHigh"] = down + row["dev"]
