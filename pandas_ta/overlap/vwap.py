@@ -21,7 +21,7 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
         print(f"[!] VWAP price series is not datetime ordered. Results may not be as expected.")
 
     if factor:
-        multiplier = ((volume.groupby(pd.Grouper(freq='D')).cumcount()) + 1) ** factor
+        multiplier = ((volume.groupby(volume.index.to_period(anchor)).cumcount()) + 1) ** factor
         volume = volume * multiplier
 
     # Calculate Result
