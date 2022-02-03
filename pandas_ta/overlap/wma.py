@@ -12,10 +12,14 @@ def wma(close, length=None, asc=None, offset=None, **kwargs):
     length = int(length) if length and length > 0 else 10
     asc = asc if asc else True
     offset = get_offset(offset)
+    factor = kwargs.get("factor", 1)
 
     # Calculate Result
-    total_weight = 0.5 * length * (length + 1)
     weights_ = Series(npArange(1, length + 1))
+    if factor:
+        weights_ = weights_ ** factor
+
+    total_weight = weights_.sum()
     weights = weights_ if asc else weights_[::-1]
 
     def linear(w):
@@ -63,6 +67,7 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 10
+    factor (int): Weight Factor. Default: 1
     asc (bool): Recent values weigh more. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
