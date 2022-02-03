@@ -10,7 +10,7 @@ def wma(close, length=None, asc=None, offset=None, **kwargs):
     # Validate Arguments
     close = verify_series(close)
     length = int(length) if length and length > 0 else 10
-    asc = asc if asc else True
+    asc = asc if asc is not None else True
     offset = get_offset(offset)
     factor = kwargs.get("factor", 1)
 
