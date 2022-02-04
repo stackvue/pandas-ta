@@ -12,7 +12,7 @@ def wma(close, length=None, asc=None, offset=None, **kwargs):
     length = int(length) if length and length > 0 else 10
     asc = asc if asc is not None else True
     offset = get_offset(offset)
-    factor = kwargs.get("factor", 1)
+    factor = float(kwargs.get("factor", 1))
 
     # Calculate Result
     weights_ = Series(npArange(1, length + 1))
