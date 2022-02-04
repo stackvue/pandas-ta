@@ -16,7 +16,7 @@ def wma(close, length=None, asc=None, offset=None, **kwargs):
 
     # Calculate Result
     weights_ = Series(npArange(1, length + 1))
-    if factor:
+    if factor is not None:
         weights_ = weights_ ** factor
 
     total_weight = weights_.sum()
