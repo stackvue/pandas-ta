@@ -13,7 +13,7 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
     volume = verify_series(volume)
     anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
     offset = get_offset(offset)
-    factor = kwargs.get("factor", 0)
+    factor = float(kwargs.get("factor", 0))
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
         print(f"[!] VWAP volume series is not datetime ordered. Results may not be as expected.")
