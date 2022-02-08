@@ -35,7 +35,6 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
         if index.date() != prev_date:
             upper_delta, lower_delta  = prepare_boundary(prev_close, mode, u_bound, l_bound)
             broken_close = prev_close
-            value = 0
         prev_close = row["close"]
         prev_date = index.date()
         if mode == "abs":
