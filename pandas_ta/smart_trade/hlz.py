@@ -18,8 +18,8 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
 
     mode = mode or "abs"
     decay = kwargs.get("decay", 0)
-    u_decay = kwargs.get("u_decay", decay) / 100
-    l_decay = kwargs.get("l_decay", decay) / 100
+    u_decay = kwargs.get("u_decay", decay)
+    l_decay = kwargs.get("l_decay", decay)
 
     # Prepare DataFrame to return
     df = DataFrame({"close": close})
@@ -30,14 +30,19 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
     upper_delta, lower_delta = prepare_boundary(close.iloc[0], mode, u_bound, l_bound)
     broken_close = prev_close = close.iloc[0]
     add_zone = True
+    value = 0
     for index, row in df.iterrows():
         if index.date() != prev_date:
             upper_delta, lower_delta  = prepare_boundary(prev_close, mode, u_bound, l_bound)
             broken_close = prev_close
         prev_close = row["close"]
         prev_date = index.date()
-        upper_delta *= (1-u_decay)
-        lower_delta *= (1-l_decay)
+        if mode == "abs":
+            upper_delta -= u_decay * value
+            lower_delta -= l_decay * value
+        else:
+            upper_delta *= ((1-u_decay/100) ** float(value))
+            lower_delta *= ((1-l_decay/100) ** float(value))
         upper = df.loc[index, "HLZ_HIGH"] = broken_close + upper_delta
         lower = df.loc[index, "HLZ_LOW"] = broken_close - lower_delta
         if not lower < row["close"] < upper:
