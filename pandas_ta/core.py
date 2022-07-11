@@ -754,7 +754,7 @@ class AnalysisIndicators(BasePandasObject):
 
     # Cycles
     def ebsw(self, close=None, length=None, bars=None, offset=None, **kwargs):
-        close = self._get_column(kwargs.pop("close", "close"))
+        close = self._get_column(close or "close")
 
         result = ebsw(close=close, length=length, bars=bars, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
@@ -1028,7 +1028,9 @@ class AnalysisIndicators(BasePandasObject):
 
     def rate(self, length=None, offset=None, accumulate=False, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
-        base = self._get_column(kwargs.pop("base", "candle_time"))
+        base_col = kwargs.pop("base")
+        base = self._get_column(base_col) if base_col else self._df.index
+
         result = rate(close=close, base=base, length=length, offset=offset, accumulate=accumulate, **kwargs)
         return self._post_process(result, **kwargs)
 
@@ -1377,6 +1379,8 @@ class AnalysisIndicators(BasePandasObject):
         if fast is None and slow is None:
             return self._df
         else:
+            fast = self._get_column(kwargs.pop("fast", "close"))
+            slow = self._get_column(kwargs.pop("slow", "open"))
             result = long_run(fast=fast, slow=slow, length=length, offset=offset, **kwargs)
             return self._post_process(result, **kwargs)
 
@@ -1398,16 +1402,18 @@ class AnalysisIndicators(BasePandasObject):
         if fast is None and slow is None:
             return self._df
         else:
+            fast = self._get_column(kwargs.pop("fast", "close"))
+            slow = self._get_column(kwargs.pop("slow", "open"))
             result = short_run(fast=fast, slow=slow, length=length, offset=offset, **kwargs)
             return self._post_process(result, **kwargs)
 
-    def supertrend(self, period=None, multiplier=None, mamode=None, drift=None, offset=None, **kwargs):
-        high = self._get_column(kwargs.pop("high", "high"))
-        low = self._get_column(kwargs.pop("low", "low"))
-        close = self._get_column(kwargs.pop("close", "close"))
-
-        result = supertrend(high=high, low=low, close=close, period=period, multiplier=multiplier, mamode=mamode, drift=drift, offset=offset, **kwargs)
-        return self._post_process(result, **kwargs)
+    # def supertrend(self, period=None, multiplier=None, mamode=None, drift=None, offset=None, **kwargs):
+    #     high = self._get_column(kwargs.pop("high", "high"))
+    #     low = self._get_column(kwargs.pop("low", "low"))
+    #     close = self._get_column(kwargs.pop("close", "close"))
+    #
+    #     result = supertrend(high=high, low=low, close=close, period=period, multiplier=multiplier, mamode=mamode, drift=drift, offset=offset, **kwargs)
+    #     return self._post_process(result, **kwargs)
 
     def ttm_trend(self, length=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
@@ -1666,7 +1672,7 @@ class AnalysisIndicators(BasePandasObject):
 
     def pvol(self, volume=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
-        volume = self._get_column(kwargs.pop("volume", "volume"))
+        volume = self._get_column(volume or "volume")
 
         result = pvol(close=close, volume=volume, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
