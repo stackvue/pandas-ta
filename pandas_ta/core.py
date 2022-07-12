@@ -1269,6 +1269,7 @@ class AnalysisIndicators(BasePandasObject):
             return self._df
         else:
             close = self._get_column(kwargs.pop("close", "close"))
+            trend = self._get_column(trend)
             result = trend_return(close=close, trend=trend, log=log, cumulative=cumulative, offset=offset, trend_reset=trend_reset, **kwargs)
             return self._post_process(result, **kwargs)
 
@@ -1379,8 +1380,8 @@ class AnalysisIndicators(BasePandasObject):
         if fast is None and slow is None:
             return self._df
         else:
-            fast = self._get_column(kwargs.pop("fast", "close"))
-            slow = self._get_column(kwargs.pop("slow", "open"))
+            fast = self._get_column(fast or "close")
+            slow = self._get_column(slow or "open")
             result = long_run(fast=fast, slow=slow, length=length, offset=offset, **kwargs)
             return self._post_process(result, **kwargs)
 
@@ -1402,8 +1403,8 @@ class AnalysisIndicators(BasePandasObject):
         if fast is None and slow is None:
             return self._df
         else:
-            fast = self._get_column(kwargs.pop("fast", "close"))
-            slow = self._get_column(kwargs.pop("slow", "open"))
+            fast = self._get_column(fast or "close")
+            slow = self._get_column(slow or "open")
             result = short_run(fast=fast, slow=slow, length=length, offset=offset, **kwargs)
             return self._post_process(result, **kwargs)
 
