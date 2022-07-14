@@ -372,15 +372,20 @@ class AnalysisIndicators(BasePandasObject):
                     # the default names.
                     if "col_names" in kwargs and isinstance(
                             kwargs["col_names"], tuple):
-                        if len(kwargs["col_names"]) >= len(result.columns):
-                            for col, ind_name in zip(result.columns, kwargs["col_names"]):
-                                col_name = tuple((multi_index_prefix or []) + [ind_name] + (multi_index_suffix or []))
-                                df[col_name] = result.loc[:, col]
-                        else:
-                            print(
-                                f"Not enough col_names were specified : got {len(kwargs['col_names'])}, expected {len(result.columns)}."
-                            )
-                            return
+                        # if len(kwargs["col_names"]) >= len(result.columns):
+                        col_names = kwargs["col_names"]
+                        col_len = len(col_names)
+                        i = 0
+                        for col in result.columns:
+                            ind_name = col_names[i] if i < col_len else col
+                            col_name = tuple((multi_index_prefix or []) + [ind_name] + (multi_index_suffix or []))
+                            df[col_name] = result.loc[:, col]
+                            i += 1
+                        # else:
+                        #     print(
+                        #         f"Not enough col_names were specified : got {len(kwargs['col_names'])}, expected {len(result.columns)}."
+                        #     )
+                        #     return
                     else:
                         for i, column in enumerate(result.columns):
                             col_name = tuple((multi_index_prefix or []) + [column] + (multi_index_suffix or []))
