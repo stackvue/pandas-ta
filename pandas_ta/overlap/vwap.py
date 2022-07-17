@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+from pandas import DataFrame
 
-import pandas as pd
-from .hlc3 import hlc3
 from pandas_ta.utils import get_offset, is_datetime_ordered, verify_series
+from .hlc3 import hlc3
+
 
 def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
     """Indicator: Volume Weighted Average Price (VWAP)"""
@@ -14,64 +15,72 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
     anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
     offset = get_offset(offset)
     factor = float(kwargs.get("factor", 0))
+    factor_range = float(kwargs.get("factor_range", 0))
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
         print(f"[!] VWAP volume series is not datetime ordered. Results may not be as expected.")
     if not is_datetime_ordered(typical_price):
         print(f"[!] VWAP price series is not datetime ordered. Results may not be as expected.")
-
-    if factor:
-        multiplier = ((volume.groupby(volume.index.to_period(anchor)).cumcount()) + 1) ** factor
+    multiplier = None
+    if factor or factor_range:
+        multiplier = volume.groupby(volume.index.to_period(anchor)).cumcount().groupby(
+            volume.index.to_period(anchor)).transform(lambda x: (x + 1) ** (factor + factor_range * x / x.max()))
         volume = volume * multiplier
 
     # Calculate Result
     wp = typical_price * volume
-    vwap  = wp.groupby(wp.index.to_period(anchor)).cumsum()
+    vwap = wp.groupby(wp.index.to_period(anchor)).cumsum()
     vwap /= volume.groupby(volume.index.to_period(anchor)).cumsum()
+
+    _props = f"_{anchor}"
+    df = DataFrame({
+        f"VWAP{_props}": vwap,
+        f"VWAPf{_props}": multiplier if multiplier is not None else 1,
+        f"VWAPw{_props}": volume
+    }, index=volume.index)
+
+    df.name = f"VWAP_{_props}"
+    df.category = "overlap"
 
     # Offset
     if offset != 0:
-        vwap = vwap.shift(offset)
+        df = df.shift(offset)
 
-    # Name & Category
-    vwap.name = f"VWAP_{anchor}"
-    vwap.category = "overlap"
-
-    return vwap
+    return df
 
 
 vwap.__doc__ = \
-"""Volume Weighted Average Price (VWAP)
-
-The Volume Weighted Average Price that measures the average typical price
-by volume.  It is typically used with intraday charts to identify general
-direction.
-
-Sources:
-    https://www.tradingview.com/wiki/Volume_Weighted_Average_Price_(VWAP)
-    https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/volume-weighted-average-price-vwap/
-    https://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:vwap_intraday
-
-Calculation:
-    tp = typical_price = hlc3(high, low, close)
-    tpv = tp * volume
-    VWAP = tpv.cumsum() / volume.cumsum()
-
-Args:
-    high (pd.Series): Series of 'high's
-    low (pd.Series): Series of 'low's
-    close (pd.Series): Series of 'close's
-    volume (pd.Series): Series of 'volume's
-    anchor (str): How to anchor VWAP. Depending on the index values, it will
-        implement various Timeseries Offset Aliases as listed here:
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
-        Default: "D".
-    offset (int): How many periods to offset the result. Default: 0
-
-Kwargs:
-    fillna (value, optional): pd.DataFrame.fillna(value)
-    fill_method (value, optional): Type of fill method
-
-Returns:
-    pd.Series: New feature generated.
-"""
+    """Volume Weighted Average Price (VWAP)
+    
+    The Volume Weighted Average Price that measures the average typical price
+    by volume.  It is typically used with intraday charts to identify general
+    direction.
+    
+    Sources:
+        https://www.tradingview.com/wiki/Volume_Weighted_Average_Price_(VWAP)
+        https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/volume-weighted-average-price-vwap/
+        https://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:vwap_intraday
+    
+    Calculation:
+        tp = typical_price = hlc3(high, low, close)
+        tpv = tp * volume
+        VWAP = tpv.cumsum() / volume.cumsum()
+    
+    Args:
+        high (pd.Series): Series of 'high's
+        low (pd.Series): Series of 'low's
+        close (pd.Series): Series of 'close's
+        volume (pd.Series): Series of 'volume's
+        anchor (str): How to anchor VWAP. Depending on the index values, it will
+            implement various Timeseries Offset Aliases as listed here:
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
+            Default: "D".
+        offset (int): How many periods to offset the result. Default: 0
+    
+    Kwargs:
+        fillna (value, optional): pd.DataFrame.fillna(value)
+        fill_method (value, optional): Type of fill method
+    
+    Returns:
+        pd.Series: New feature generated.
+    """
