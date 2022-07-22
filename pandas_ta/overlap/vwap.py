@@ -23,8 +23,9 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
         print(f"[!] VWAP price series is not datetime ordered. Results may not be as expected.")
     multiplier = None
     if factor or factor_range:
+        candles = volume.groupby(volume.index.to_period(anchor)).count().max()
         multiplier = volume.groupby(volume.index.to_period(anchor)).cumcount().groupby(
-            volume.index.to_period(anchor)).transform(lambda x: (x + 1) ** (factor + factor_range * x / x.max()))
+            volume.index.to_period(anchor)).transform(lambda x: (x + 1) ** (factor + factor_range * x / candles))
         volume = volume * multiplier
 
     # Calculate Result
