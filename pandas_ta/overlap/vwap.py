@@ -5,13 +5,15 @@ from pandas_ta.utils import get_offset, is_datetime_ordered, verify_series
 from .hlc3 import hlc3
 
 
-def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
+def vwap(high, low, close, volume, use_multiplier=False, multiplier=None, anchor=None, offset=None, **kwargs):
     """Indicator: Volume Weighted Average Price (VWAP)"""
     # Validate Arguments
     high = verify_series(high)
     low = verify_series(low)
     close = verify_series(close)
     volume = verify_series(volume)
+    if use_multiplier:
+        multiplier = verify_series(multiplier) or multiplier
     anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
     offset = get_offset(offset)
     factor = float(kwargs.get("factor", 0))
@@ -21,13 +23,14 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
         print(f"[!] VWAP volume series is not datetime ordered. Results may not be as expected.")
     if not is_datetime_ordered(typical_price):
         print(f"[!] VWAP price series is not datetime ordered. Results may not be as expected.")
-    multiplier = None
+    factor_value = None
     if factor or factor_range:
         candles = volume.groupby(volume.index.to_period(anchor)).count().max()
-        multiplier = volume.groupby(volume.index.to_period(anchor)).cumcount().groupby(
+        factor_value = volume.groupby(volume.index.to_period(anchor)).cumcount().groupby(
             volume.index.to_period(anchor)).transform(lambda x: (x + 1) ** (factor + factor_range * x / candles))
-        volume = volume * multiplier
-
+        volume *= factor_value
+    if multiplier is not None and use_multiplier:
+        volume *= multiplier
     # Calculate Result
     wp = typical_price * volume
     vwap = wp.groupby(wp.index.to_period(anchor)).cumsum()
@@ -36,7 +39,7 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
     _props = f"_{anchor}"
     df = DataFrame({
         f"VWAP{_props}": vwap,
-        f"VWAPf{_props}": multiplier if multiplier is not None else 1,
+        f"VWAPf{_props}": factor_value if factor_value is not None else 1,
         f"VWAPw{_props}": volume
     }, index=volume.index)
 

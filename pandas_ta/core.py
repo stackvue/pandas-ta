@@ -1002,7 +1002,7 @@ class AnalysisIndicators(BasePandasObject):
         close = self._get_column(kwargs.pop("close", "close"))
         result = alma(close=close, length=length, sigma=sigma, distribution_offset=distribution_offset, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
-        
+
     def dema(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = dema(close=close, length=length, offset=offset, **kwargs)
@@ -1110,7 +1110,7 @@ class AnalysisIndicators(BasePandasObject):
         close = self._get_column(kwargs.pop("close", "close"))
         result = hma(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
-    
+
     def hwma(self, na=None, nb=None, nc=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = hwma(close=close, na=na, nb=nb, nc=nc, offset=offset, **kwargs)
@@ -1226,11 +1226,12 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
+        multiplier = self._get_column(kwargs.pop("multiplier", None)) or kwargs.pop("multiplier", 1)
 
         if not self.datetime_ordered:
             volume.index = self._df.index
 
-        result = vwap(high=high, low=low, close=close, volume=volume, anchor=anchor, offset=offset, **kwargs)
+        result = vwap(high=high, low=low, close=close, volume=volume, multiplier=multiplier, anchor=anchor, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def vwma(self, volume=None, length=None, offset=None, **kwargs):

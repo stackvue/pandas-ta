@@ -3,18 +3,20 @@ from math import atan, pi
 from pandas_ta.utils import get_offset, verify_series
 
 
-def slope( close, length=None, as_angle=None, to_degrees=None, vertical=None, offset=None, **kwargs):
+def slope(close, length=None, as_angle=None, to_degrees=None, vertical=None, offset=None, **kwargs):
     """Indicator: Slope"""
     # Validate arguments
     close = verify_series(close)
     length = int(length) if length and length > 0 else 1
-    as_angle = True if isinstance(as_angle, bool) else False
-    to_degrees = True if isinstance(to_degrees, bool) else False
+    as_angle = as_angle if isinstance(as_angle, bool) else False
+    to_degrees = to_degrees if isinstance(to_degrees, bool) else False
     offset = get_offset(offset)
 
     # Calculate Result
     slope = close.diff(length) / length
     if as_angle:
+        if kwargs.get("use_interval"):
+            slope /= ((close.index[1] - close.index[0]).seconds / 60)
         slope = slope.apply(atan)
         if to_degrees:
             slope *= 180 / pi
