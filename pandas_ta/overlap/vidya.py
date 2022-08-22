@@ -7,10 +7,12 @@ from pandas_ta.utils import get_drift, get_offset, verify_series
 def vidya(close, length=None, drift=None, offset=None, **kwargs):
     """Indicator: Variable Index Dynamic Average (VIDYA)"""
     # Validate Arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 14
+    close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
+
+    if close is None: return
 
     def _cmo(source: Series, n:int , d: int):
         """Chande Momentum Oscillator (CMO) Patch
@@ -38,6 +40,12 @@ def vidya(close, length=None, drift=None, offset=None, **kwargs):
     # Offset
     if offset != 0:
         vidya = vidya.shift(offset)
+
+    # Handle fills
+    if "fillna" in kwargs:
+        vidya.fillna(kwargs["fillna"], inplace=True)
+    if "fill_method" in kwargs:
+        vidya.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     vidya.name = f"VIDYA_{length}"

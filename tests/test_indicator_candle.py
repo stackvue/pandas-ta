@@ -39,6 +39,17 @@ class TestCandle(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "Heikin-Ashi")
 
+    def test_cdl_pattern(self):
+        result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(len(result.columns), len(pandas_ta.CDL_PATTERN_NAMES))
+
+        result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="doji")
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name=["doji", "inside"])
+        self.assertIsInstance(result, DataFrame)
+
     def test_cdl_doji(self):
         result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
@@ -47,7 +58,7 @@ class TestCandle(TestCase):
         try:
             expected = tal.CDLDOJI(self.open, self.high, self.low, self.close)
             pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError as ae:
+        except AssertionError:
             try:
                 corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
@@ -62,3 +73,8 @@ class TestCandle(TestCase):
         result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close, asbool=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CDL_INSIDE")
+
+    def test_cdl_z(self):
+        result = pandas_ta.cdl_z(self.open, self.high, self.low, self.close)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "CDL_Z_30_1")

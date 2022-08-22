@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 from pandas import DataFrame
 from pandas_ta.overlap import ma
 from pandas_ta.utils import get_offset, verify_series, get_drift
@@ -8,15 +7,17 @@ from pandas_ta.utils import get_offset, verify_series, get_drift
 def thermo(high, low, length=None, long=None, short=None, mamode=None, drift=None, offset=None, **kwargs):
     """Indicator: Elders Thermometer (THERMO)"""
     # Validate arguments
-    high = verify_series(high)
-    low = verify_series(low)
     length = int(length) if length and length > 0 else 20
     long = float(long) if long and long > 0 else 2
     short = float(short) if short and short > 0 else 0.5
     mamode = mamode if isinstance(mamode, str) else "ema"
+    high = verify_series(high, length)
+    low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
     asint = kwargs.pop("asint", True)
+
+    if high is None or low is None: return
 
     # Calculate Result
     thermoL = (low.shift(drift) - low).abs()
@@ -41,8 +42,8 @@ def thermo(high, low, length=None, long=None, short=None, mamode=None, drift=Non
     if offset != 0:
         thermo = thermo.shift(offset)
         thermo_ma = thermo_ma.shift(offset)
-        therthermo_longmo_ma = thermo_ma.shift(offset)
-        thermo_short = thermo_ma.shift(offset)
+        thermo_long = thermo_long.shift(offset)
+        thermo_short = thermo_short.shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:
@@ -111,8 +112,8 @@ Args:
     long(int): The buy factor
     short(float): The sell factor
     length (int): The  period. Default: 20
+    mamode (str): See ```help(ta.ma)```. Default: 'ema'
     drift (int): The diff period. Default: 1
-    mamode (str): Three options: "ema", "sma", or "hma". Default: "ema"
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

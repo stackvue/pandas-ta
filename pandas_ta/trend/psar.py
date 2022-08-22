@@ -1,81 +1,87 @@
 # -*- coding: utf-8 -*-
-from numpy import NaN as npNaN
+from numpy import nan as npNaN
 from pandas import DataFrame, Series
-from pandas_ta.utils import get_offset, verify_series
+from pandas_ta.utils import get_offset, verify_series, zero
 
 
-def psar(high, low, close=None, af=None, max_af=None, offset=None, **kwargs):
+def psar(high, low, close=None, af0=None, af=None, max_af=None, offset=None, **kwargs):
     """Indicator: Parabolic Stop and Reverse (PSAR)"""
     # Validate Arguments
     high = verify_series(high)
     low = verify_series(low)
     af = float(af) if af and af > 0 else 0.02
+    af0 = float(af0) if af0 and af0 > 0 else af
     max_af = float(max_af) if max_af and max_af > 0 else 0.2
     offset = get_offset(offset)
 
-    # Initialize
-    m = high.shape[0]
-    af0 = af
-    bullish = True
-    high_point = high.iloc[0]
-    low_point = low.iloc[0]
+    def _falling(high, low, drift:int=1):
+        """Returns the last -DM value"""
+        # Not to be confused with ta.falling()
+        up = high - high.shift(drift)
+        dn = low.shift(drift) - low
+        _dmn = (((dn > up) & (dn > 0)) * dn).apply(zero).iloc[-1]
+        return _dmn > 0
+
+    # Falling if the first NaN -DM is positive
+    falling = _falling(high.iloc[:2], low.iloc[:2])
+    if falling:
+        sar = high.iloc[0]
+        ep = low.iloc[0]
+    else:
+        sar = low.iloc[0]
+        ep = high.iloc[0]
 
     if close is not None:
         close = verify_series(close)
-        sar = close.copy()
-    else:
-        sar = low.copy()
+        sar = close.iloc[0]
 
-    long = Series(npNaN, index=sar.index)
+    long = Series(npNaN, index=high.index)
     short = long.copy()
-    reversal = Series(False, index=sar.index)
+    reversal = Series(0, index=high.index)
     _af = long.copy()
     _af.iloc[0:2] = af0
 
     # Calculate Result
-    for i in range(2, m):
-        reverse = False
-        _af[i] = af
+    m = high.shape[0]
+    for row in range(1, m):
+        high_ = high.iloc[row]
+        low_ = low.iloc[row]
 
-        if bullish:
-            sar[i] = sar[i - 1] + af * (high_point - sar[i - 1])
+        if falling:
+            _sar = sar + af * (ep - sar)
+            reverse = high_ > _sar
 
-            if low[i] < sar[i]:
-                bullish, reverse, af = False, True, af0
-                sar[i] = high_point
-                low_point = low[i]
+            if low_ < ep:
+                ep = low_
+                af = min(af + af0, max_af)
+
+            _sar = max(high.iloc[row - 1], high.iloc[row - 2], _sar)
         else:
-            sar[i] = sar[i - 1] + af * (low_point - sar[i - 1])
+            _sar = sar + af * (ep - sar)
+            reverse = low_ < _sar
 
-            if high[i] > sar[i]:
-                bullish, reverse, af = True, True, af0
-                sar[i] = low_point
-                high_point = high[i]
+            if high_ > ep:
+                ep = high_
+                af = min(af + af0, max_af)
 
-        reversal[i] = reverse
+            _sar = min(low.iloc[row - 1], low.iloc[row - 2], _sar)
 
-        if not reverse:
-            if bullish:
-                if high[i] > high_point:
-                    high_point = high[i]
-                    af = min(af + af0, max_af)
-                if low[i - 1] < sar[i]:
-                    sar[i] = low[i - 1]
-                if low[i - 2] < sar[i]:
-                    sar[i] = low[i - 2]
-            else:
-                if low[i] < low_point:
-                    low_point = low[i]
-                    af = min(af + af0, max_af)
-                if high[i - 1] > sar[i]:
-                    sar[i] = high[i - 1]
-                if high[i - 2] > sar[i]:
-                    sar[i] = high[i - 2]
+        if reverse:
+            _sar = ep
+            af = af0
+            falling = not falling # Must come before next line
+            ep = low_ if falling else high_
 
-        if bullish:
-            long[i] = sar[i]
+        sar = _sar # Update SAR
+
+        # Seperate long/short sar based on falling
+        if falling:
+            short.iloc[row] = sar
         else:
-            short[i] = sar[i]
+            long.iloc[row] = sar
+
+        _af.iloc[row] = af
+        reversal.iloc[row] = int(reverse)
 
     # Offset
     if offset != 0:
@@ -114,20 +120,31 @@ def psar(high, low, close=None, af=None, max_af=None, offset=None, **kwargs):
 psar.__doc__ = \
 """Parabolic Stop and Reverse (psar)
 
-Parabolic Stop and Reverse
+Parabolic Stop and Reverse (PSAR) was developed by J. Wells Wilder, that is used
+to determine trend direction and it's potential reversals in price. PSAR uses a
+trailing stop and reverse method called "SAR," or stop and reverse, to identify
+possible entries and exits. It is also known as SAR.
 
-Source:
-    https://github.com/virtualizedfrog/blog_code/blob/master/PSAR/psar.py
+PSAR indicator typically appears on a chart as a series of dots, either above or
+below an asset's price, depending on the direction the price is moving. A dot is
+placed below the price when it is trending upward, and above the price when it
+is trending downward.
+
+Sources:
+    https://www.tradingview.com/pine-script-reference/#fun_sar
+    https://www.sierrachart.com/index.php?page=doc/StudiesReference.php&ID=66&Name=Parabolic
 
 Calculation:
     Default Inputs:
-        af=0.02
-        max_af=0.2
+        af0=0.02, af=0.02, max_af=0.2
+
+    See Source links
 
 Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series, optional): Series of 'close's. Optional
+    af0 (float): Initial Acceleration Factor. Default: 0.02
     af (float): Acceleration Factor. Default: 0.02
     max_af (float): Maximum Acceleration Factor. Default: 0.2
     offset (int): How many periods to offset the result. Default: 0

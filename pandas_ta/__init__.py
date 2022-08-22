@@ -3,16 +3,15 @@ name = "pandas_ta"
 .. moduleauthor:: Kevin Johnson
 """
 from importlib.util import find_spec
+from pathlib import Path
 from pkg_resources import get_distribution, DistributionNotFound
-import os.path
 
 
 _dist = get_distribution("pandas_ta")
 try:
     # Normalize case for Windows systems
-    dist_loc = os.path.normcase(_dist.location)
-    here = os.path.normcase(__file__)
-    if not here.startswith(os.path.join(dist_loc, "pandas_ta")):
+    here = Path(_dist.location) / __file__
+    if not here.exists():
         # not installed, but there is another version that *is*
         raise DistributionNotFound
 except DistributionNotFound:
@@ -20,16 +19,20 @@ except DistributionNotFound:
 
 version = __version__ = _dist.version
 
-
 Imports = {
+    "alphaVantage-api": find_spec("alphaVantageAPI") is not None,
+    "matplotlib": find_spec("matplotlib") is not None,
+    "mplfinance": find_spec("mplfinance") is not None,
+    "numba": find_spec("numba") is not None,
+    "yaml": find_spec("yaml") is not None,
     "scipy": find_spec("scipy") is not None,
     "sklearn": find_spec("sklearn") is not None,
     "statsmodels": find_spec("statsmodels") is not None,
-    "matplotlib": find_spec("matplotlib") is not None,
-    "mplfinance": find_spec("mplfinance") is not None,
-    "alphaVantage-api ": find_spec("alphaVantageAPI") is not None,
-    "yfinance": find_spec("yfinance") is not None,
+    "stochastic": find_spec("stochastic") is not None,
     "talib": find_spec("talib") is not None,
+    "tqdm": find_spec("tqdm") is not None,
+    "vectorbt": find_spec("vectorbt") is not None,
+    "yfinance": find_spec("yfinance") is not None,
 }
 
 # Not ideal and not dynamic but it works.
@@ -37,37 +40,37 @@ Imports = {
 Category = {
     # Candles
     "candles": [
-        "cdl_doji", "cdl_inside", "ha"
+        "cdl_pattern", "cdl_z", "ha"
     ],
     # Cycles
     "cycles": ["ebsw"],
     # Momentum
     "momentum": [
         "ao", "apo", "bias", "bop", "brar", "cci", "cfo", "cg", "cmo",
-        "coppock", "er", "eri", "fisher", "inertia", "kdj", "kst", "macd",
+        "coppock", "cti", "er", "eri", "fisher", "inertia", "kdj", "kst", "macd",
         "mom", "pgo", "ppo", "psl", "pvo", "qqe", "roc", "rsi", "rsx", "rvgi",
-        "slope", "smi", "squeeze", "stoch", "stochrsi", "trix", "tsi", "uo",
-        "willr"
+        "slope", "smi", "squeeze", "squeeze_pro", "stc", "stoch", "stochrsi", "td_seq", "trix",
+        "tsi", "uo", "willr"
     ],
     # Overlap
     "overlap": [
         "alma", "dema", "ema", "fwma", "hilo", "hl2", "hlc3", "hma", "ichimoku",
-        "kama", "linreg", "mcgd", "midpoint", "midprice", "ohlc4", "pwma", "rma",
-        "sinwma", "sma", "ssf", "supertrend", "swma", "t3", "tema", "trima",
-        "vidya", "vwap", "vwma", "wcp", "wma", "zlma"
+        "jma", "kama", "linreg", "mcgd", "midpoint", "midprice", "ohlc4",
+        "pwma", "rma", "sinwma", "sma", "ssf", "supertrend", "swma", "t3",
+        "tema", "trima", "vidya", "vwap", "vwma", "wcp", "wma", "zlma"
     ],
     # Performance
-    "performance": ["log_return", "percent_return", "trend_return"],
+    "performance": ["log_return", "percent_return"],
     # Statistics
     "statistics": [
         "entropy", "kurtosis", "mad", "median", "quantile", "skew", "stdev",
-        "variance", "zscore"
+        "tos_stdevall", "variance", "zscore"
     ],
     # Trend
     "trend": [
         "adx", "amat", "aroon", "chop", "cksp", "decay", "decreasing", "dpo",
-        "increasing", "long_run", "psar", "qstick", "short_run", "ttm_trend",
-        "vortex"
+        "increasing", "long_run", "psar", "qstick", "short_run", "tsignals",
+        "ttm_trend", "vhf", "vortex", "xsignals"
     ],
     # Volatility
     "volatility": [
@@ -77,8 +80,8 @@ Category = {
 
     # Volume, "vp" or "Volume Profile" is unique
     "volume": [
-        "ad", "adosc", "aobv", "cmf", "efi", "eom", "mfi", "nvi", "obv", "pvi",
-        "pvol", "pvr", "pvt"
+        "ad", "adosc", "aobv", "cmf", "efi", "eom", "kvo", "mfi", "nvi", "obv",
+        "pvi", "pvol", "pvr", "pvt"
     ],
 
     # SmartTrade, "smart-trade" or "Smart Trade" is unique

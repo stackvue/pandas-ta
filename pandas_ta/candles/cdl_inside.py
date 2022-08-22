@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-from pandas import DataFrame, set_option
-from pandas_ta.utils import candle_color, get_drift, get_offset
-from pandas_ta.utils import non_zero_range, real_body, verify_series
+from pandas_ta.utils import candle_color, get_offset
+from pandas_ta.utils import verify_series
 
 
 def cdl_inside(open_, high, low, close, asbool=False, offset=None, **kwargs):
@@ -26,7 +25,6 @@ def cdl_inside(open_, high, low, close, asbool=False, offset=None, **kwargs):
     # Handle fills
     if "fillna" in kwargs:
         inside.fillna(kwargs["fillna"], inplace=True)
-
     if "fill_method" in kwargs:
         inside.fillna(method=kwargs["fill_method"], inplace=True)
 

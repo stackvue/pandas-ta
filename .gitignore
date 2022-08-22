@@ -121,16 +121,15 @@ setup.cfg
 doc.py
 pandas_pips
 reqs.txt
-requirements.txt
 driver.py
 qd.py
+tdseq.py
 
 # Local package installs
 ta-lib/
 AlphaVantageAPI/
 
 # Data & NB Exclusions
-*.ipynb
 *.csv
 data/datas.csv
 data/f500.csv
@@ -143,3 +142,5 @@ data/SPY_D_TV3.csv
 data/TV_5min.csv
 data/tulip.csv
 examples/*.csv
+jnb/*.ipynb
+jnb/*.txt

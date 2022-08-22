@@ -1,29 +1,37 @@
 # -*- coding: utf-8 -*-
 from pandas import DataFrame, concat
+from pandas_ta import Imports
 from pandas_ta.overlap import rma
 from pandas_ta.utils import get_drift, get_offset, verify_series, signals
 
 
-def rsi(close, length=None, scalar=None, drift=None, offset=None, **kwargs):
+def rsi(close, length=None, scalar=None, talib=None, drift=None, offset=None, **kwargs):
     """Indicator: Relative Strength Index (RSI)"""
     # Validate arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 14
     scalar = float(scalar) if scalar else 100
+    close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
+
+    if close is None: return
 
     # Calculate Result
-    negative = close.diff(drift)
-    positive = negative.copy()
+    if Imports["talib"] and mode_tal:
+        from talib import RSI
+        rsi = RSI(close, length)
+    else:
+        negative = close.diff(drift)
+        positive = negative.copy()
 
-    positive[positive < 0] = 0  # Make negatives 0 for the postive series
-    negative[negative > 0] = 0  # Make postives 0 for the negative series
+        positive[positive < 0] = 0  # Make negatives 0 for the postive series
+        negative[negative > 0] = 0  # Make postives 0 for the negative series
 
-    positive_avg = rma(positive, length=length)
-    negative_avg = rma(negative, length=length)
+        positive_avg = rma(positive, length=length)
+        negative_avg = rma(negative, length=length)
 
-    rsi = scalar * positive_avg / (positive_avg + negative_avg.abs())
+        rsi = scalar * positive_avg / (positive_avg + negative_avg.abs())
 
     # Offset
     if offset != 0:
@@ -77,13 +85,14 @@ Calculation:
     Default Inputs:
         length=14, scalar=100, drift=1
     ABS = Absolute Value
-    EMA = Exponential Moving Average
+    RMA = Rolling Moving Average
 
-    positive = close if close.diff(drift) > 0 else 0
-    negative = close if close.diff(drift) < 0 else 0
+    diff = close.diff(drift)
+    positive = diff if diff > 0 else 0
+    negative = diff if diff < 0 else 0
 
-    pos_avg = EMA(positive, length)
-    neg_avg = ABS(EMA(negative, length))
+    pos_avg = RMA(positive, length)
+    neg_avg = ABS(RMA(negative, length))
 
     RSI = scalar * pos_avg / (pos_avg + neg_avg)
 
@@ -91,6 +100,8 @@ Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 14
     scalar (float): How much to magnify. Default: 100
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 

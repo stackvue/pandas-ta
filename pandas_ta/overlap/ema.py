@@ -1,28 +1,42 @@
 # -*- coding: utf-8 -*-
-from numpy import NaN as npNaN
+from numpy import nan as npNaN
+from pandas_ta import Imports
 from pandas_ta.utils import get_offset, verify_series
 
 
-def ema(close, length=None, offset=None, **kwargs):
+def ema(close, length=None, talib=None, offset=None, **kwargs):
     """Indicator: Exponential Moving Average (EMA)"""
     # Validate Arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 10
     adjust = kwargs.pop("adjust", False)
     sma = kwargs.pop("sma", True)
+    close = verify_series(close, length)
     offset = get_offset(offset)
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
+
+    if close is None: return
 
     # Calculate Result
-    if sma:
-        close = close.copy()
-        sma_nth = close[0:length].mean()
-        close[:length - 1] = npNaN
-        close.iloc[length - 1] = sma_nth
-    ema = close.ewm(span=length, adjust=adjust).mean()
+    if Imports["talib"] and mode_tal:
+        from talib import EMA
+        ema = EMA(close, length)
+    else:
+        if sma:
+            close = close.copy()
+            sma_nth = close[0:length].mean()
+            close[:length - 1] = npNaN
+            close.iloc[length - 1] = sma_nth
+        ema = close.ewm(span=length, adjust=adjust).mean()
 
     # Offset
     if offset != 0:
         ema = ema.shift(offset)
+
+    # Handle fills
+    if "fillna" in kwargs:
+        ema.fillna(kwargs["fillna"], inplace=True)
+    if "fill_method" in kwargs:
+        ema.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     ema.name = f"EMA_{length}"
@@ -56,6 +70,8 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 10
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

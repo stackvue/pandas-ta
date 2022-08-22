@@ -9,6 +9,8 @@ from .cfo import cfo
 from .cg import cg
 from .cmo import cmo
 from .coppock import coppock
+from .cti import cti
+from .dm import dm
 from .er import er
 from .eri import eri
 from .fisher import fisher
@@ -29,8 +31,11 @@ from .rvgi import rvgi
 from .slope import slope
 from .smi import smi
 from .squeeze import squeeze
+from .squeeze_pro import squeeze_pro
+from .stc import stc
 from .stoch import stoch
 from .stochrsi import stochrsi
+from .td_seq import td_seq
 from .trix import trix
 from .tsi import tsi
 from .uo import uo

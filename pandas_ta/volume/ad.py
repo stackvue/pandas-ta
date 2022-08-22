@@ -1,26 +1,32 @@
 # -*- coding: utf-8 -*-
+from pandas_ta import Imports
 from pandas_ta.utils import get_offset, non_zero_range, verify_series
 
 
-def ad(high, low, close, volume, open_=None, offset=None, **kwargs):
+def ad(high, low, close, volume, open_=None, talib=None, offset=None, **kwargs):
     """Indicator: Accumulation/Distribution (AD)"""
     # Validate Arguments
     high = verify_series(high)
     low = verify_series(low)
     close = verify_series(close)
     volume = verify_series(volume)
-    high_low_range = non_zero_range(high, low)
     offset = get_offset(offset)
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     # Calculate Result
-    if open_ is not None:
-        open_ = verify_series(open_)
-        ad = non_zero_range(close, open_)  # AD with Open
+    if Imports["talib"] and mode_tal:
+        from talib import AD
+        ad = AD(high, low, close, volume)
     else:
-        ad = 2 * close - (high + low)  # AD with High, Low, Close
+        if open_ is not None:
+            open_ = verify_series(open_)
+            ad = non_zero_range(close, open_)  # AD with Open
+        else:
+            ad = 2 * close - (high + low)  # AD with High, Low, Close
 
-    ad *= volume / high_low_range
-    ad = ad.cumsum()
+        high_low_range = non_zero_range(high, low)
+        ad *= volume / high_low_range
+        ad = ad.cumsum()
 
     # Offset
     if offset != 0:
@@ -65,6 +71,8 @@ Args:
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
     open (pd.Series): Series of 'open's
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

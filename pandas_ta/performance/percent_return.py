@@ -2,22 +2,31 @@
 from pandas_ta.utils import get_offset, verify_series
 
 
-def percent_return(close, length=None, cumulative=False, offset=None, **kwargs):
+def percent_return(close, length=None, cumulative=None, offset=None, **kwargs):
     """Indicator: Percent Return"""
     # Validate Arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 1
+    cumulative = bool(cumulative) if cumulative is not None and cumulative else False
+    close = verify_series(close, length)
     offset = get_offset(offset)
 
-    # Calculate Result
-    pct_return = close.pct_change(length)
+    if close is None: return
 
+    # Calculate Result
     if cumulative:
-        pct_return = pct_return.cumsum()
+        pct_return = (close / close.iloc[0]) - 1
+    else:
+        pct_return = close.pct_change(length) # (close / close.shift(length)) - 1
 
     # Offset
     if offset != 0:
         pct_return = pct_return.shift(offset)
+
+    # Handle fills
+    if "fillna" in kwargs:
+        pct_return.fillna(kwargs["fillna"], inplace=True)
+    if "fill_method" in kwargs:
+        pct_return.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     pct_return.name = f"{'CUM' if cumulative else ''}PCTRET_{length}"
