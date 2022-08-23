@@ -36,9 +36,19 @@ class TestStrategyMethods(TestCase):
         if speed_table:
             cls.speed_test.to_csv("tests/speed_test.csv")
         if timed:
-            print(f"[i] Cores: {cls.data.ta.cores}")
-            print(f"[i] Total Datapoints: {cls.data.shape[0]}")
+            tca = cls.speed_test['Columns'].sum()
+            tcs = cls.speed_test['Seconds'].sum()
+            cps = f"[i] Total Columns / Second for All Tests: { tca / tcs:.5f} "
+            print("=" * len(cps))
             print(cls.speed_test)
+            print(f"[i] Cores: {cls.data.ta.cores}")
+            print(f"[i] Total Datapoints per run: {cls.data.shape[0]}")
+            print(f"[i] Total Columns added: {tca}")
+            print(f"[i] Total Seconds for All Tests: {tcs:.5f}")
+            print(cps)
+            print("=" * len(cps))
+            # tmp = concat([cls.speed_test, cls.speed_test["Columns"].sum(), cls.speed_test["Seconds"].sum()])
+            # print(tmp)
         del cls.data
 
     def setUp(self):
@@ -67,6 +77,11 @@ class TestStrategyMethods(TestCase):
         self.category = "All"
         self.data.ta.strategy(verbose=verbose, timed=strategy_timed)
 
+    def test_all_ordered(self):
+        self.category = "All"
+        self.data.ta.strategy(ordered=True, verbose=verbose, timed=strategy_timed)
+        self.category = "All Ordered" # Rename for Speed Table
+
     @skipUnless(verbose, "verbose mode only")
     def test_all_strategy(self):
         self.data.ta.strategy(pandas_ta.AllStrategy, verbose=verbose, timed=strategy_timed)
@@ -75,6 +90,14 @@ class TestStrategyMethods(TestCase):
     def test_all_name_strategy(self):
         self.category = "All"
         self.data.ta.strategy(self.category, verbose=verbose, timed=strategy_timed)
+
+    # @skipUnless(verbose, "verbose mode only")
+    def test_all_multiparams_strategy(self):
+        self.category = "All"
+        self.data.ta.strategy(self.category, length=10, verbose=verbose, timed=strategy_timed)
+        self.data.ta.strategy(self.category, length=50, verbose=verbose, timed=strategy_timed)
+        self.data.ta.strategy(self.category, fast=5, slow=10, verbose=verbose, timed=strategy_timed)
+        self.category = "All Multiruns with diff Args" # Rename for Speed Table
 
     # @skip
     def test_candles_category(self):
@@ -93,15 +116,18 @@ class TestStrategyMethods(TestCase):
     # @skip
     def test_custom_a(self):
         self.category = "Custom A"
+        print()
+        print(self.category)
 
         momo_bands_sma_ta = [
+            {"kind": "cdl_pattern", "name": "tristar"},  # 1
             {"kind": "rsi"},  # 1
             {"kind": "macd"},  # 3
             {"kind": "sma", "length": 50},  # 1
             {"kind": "sma", "length": 200 },  # 1
             {"kind": "bbands", "length": 20},  # 3
             {"kind": "log_return", "cumulative": True},  # 1
-            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"}
+            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"} # 1
         ]
 
         custom = pandas_ta.Strategy(
@@ -110,6 +136,7 @@ class TestStrategyMethods(TestCase):
             "Common indicators with specific lengths and a chained indicator",  # description
         )
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
+        self.assertEqual(len(self.data.columns), 15)
 
     # @skip
     def test_custom_args_tuple(self):
@@ -130,7 +157,7 @@ class TestStrategyMethods(TestCase):
     def test_custom_col_names_tuple(self):
         self.category = "Custom C"
 
-        custom_args_ta = [{"kind": "bbands", "col_names": ("LB", "MB", "UB", "BW")}]
+        custom_args_ta = [{"kind": "bbands", "col_names": ("LB", "MB", "UB", "BW", "BP")}]
 
         custom = pandas_ta.Strategy(
             "Custom Col Numbers Tuple",
@@ -151,6 +178,25 @@ class TestStrategyMethods(TestCase):
             "Allow for easy selection of resultant columns",
         )
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
+
+    # @skip
+    def test_custom_a(self):
+        self.category = "Custom E"
+
+        amat_logret_ta = [
+            {"kind": "amat", "fast": 20, "slow": 50 },  # 2
+            {"kind": "log_return", "cumulative": True},  # 1
+            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5} # 1
+        ]
+
+        custom = pandas_ta.Strategy(
+            "AMAT Log Returns",  # name
+            amat_logret_ta,  # ta
+            "AMAT Log Returns",  # description
+        )
+        self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed, ordered=True)
+        self.data.ta.tsignals(trend=self.data["AMATe_LR_20_50_2"], append=True)
+        self.assertEqual(len(self.data.columns), 13)
 
     # @skip
     def test_momentum_category(self):
@@ -207,6 +253,7 @@ class TestStrategyMethods(TestCase):
             {"kind": "rsi"},  # 1
             {"kind": "macd"},  # 3
             {"kind": "sma", "length": 50},  # 1
+            {"kind": "sma", "length": 100, "col_names": "sma100"},  # 1
             {"kind": "sma", "length": 200 },  # 1
             {"kind": "bbands", "length": 20},  # 3
             {"kind": "log_return", "cumulative": True},  # 1

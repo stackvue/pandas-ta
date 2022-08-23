@@ -1,7 +1,7 @@
 from .config import sample_data
 from .context import pandas_ta
 
-from unittest import TestCase
+from unittest import skip, TestCase
 from pandas import DataFrame
 
 
@@ -52,6 +52,16 @@ class TestStatisticsExtension(TestCase):
         self.data.ta.stdev(append=True)
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "STDEV_30")
+
+    def test_tos_stdevall_ext(self):
+        self.data.ta.tos_stdevall(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-7:]), [
+            "TOS_STDEVALL_LR",
+            "TOS_STDEVALL_L_1", "TOS_STDEVALL_U_1",
+            "TOS_STDEVALL_L_2", "TOS_STDEVALL_U_2",
+            "TOS_STDEVALL_L_3", "TOS_STDEVALL_U_3"
+        ])
 
     def test_variance_ext(self):
         self.data.ta.variance(append=True)

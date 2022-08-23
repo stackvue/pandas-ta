@@ -1,23 +1,37 @@
 # -*- coding: utf-8 -*-
 from .ema import ema
+from pandas_ta import Imports
 from pandas_ta.utils import get_offset, verify_series
 
 
-def dema(close, length=None, offset=None, **kwargs):
+def dema(close, length=None, talib=None, offset=None, **kwargs):
     """Indicator: Double Exponential Moving Average (DEMA)"""
     # Validate Arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 10
+    close = verify_series(close, length)
     offset = get_offset(offset)
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
+
+    if close is None: return
 
     # Calculate Result
-    ema1 = ema(close=close, length=length)
-    ema2 = ema(close=ema1, length=length)
-    dema = 2 * ema1 - ema2
+    if Imports["talib"] and mode_tal:
+        from talib import DEMA
+        dema = DEMA(close, length)
+    else:
+        ema1 = ema(close=close, length=length)
+        ema2 = ema(close=ema1, length=length)
+        dema = 2 * ema1 - ema2
 
     # Offset
     if offset != 0:
         dema = dema.shift(offset)
+
+    # Handle fills
+    if "fillna" in kwargs:
+        dema.fillna(kwargs["fillna"], inplace=True)
+    if "fill_method" in kwargs:
+        dema.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     dema.name = f"DEMA_{length}"
@@ -47,6 +61,8 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 10
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

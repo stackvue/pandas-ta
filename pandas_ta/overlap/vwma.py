@@ -6,10 +6,12 @@ from pandas_ta.utils import get_offset, verify_series
 def vwma(close, volume, length=None, offset=None, **kwargs):
     """Indicator: Volume Weighted Moving Average (VWMA)"""
     # Validate Arguments
-    close = verify_series(close)
-    volume = verify_series(volume)
     length = int(length) if length and length > 0 else 10
+    close = verify_series(close, length)
+    volume = verify_series(volume, length)
     offset = get_offset(offset)
+
+    if close is None or volume is None: return
 
     # Calculate Result
     pv = close * volume
@@ -18,6 +20,12 @@ def vwma(close, volume, length=None, offset=None, **kwargs):
     # Offset
     if offset != 0:
         vwma = vwma.shift(offset)
+
+    # Handle fills
+    if "fillna" in kwargs:
+        vwma.fillna(kwargs["fillna"], inplace=True)
+    if "fill_method" in kwargs:
+        vwma.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     vwma.name = f"VWMA_{length}"

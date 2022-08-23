@@ -5,10 +5,12 @@ from pandas_ta.utils import get_offset, verify_series
 def rma(close, length=None, offset=None, **kwargs):
     """Indicator: wildeR's Moving Average (RMA)"""
     # Validate Arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 10
-    offset = get_offset(offset)
     alpha = (1.0 / length) if length > 0 else 0.5
+    close = verify_series(close, length)
+    offset = get_offset(offset)
+
+    if close is None: return
 
     # Calculate Result
     rma = close.ewm(alpha=alpha, min_periods=length).mean()
@@ -16,6 +18,12 @@ def rma(close, length=None, offset=None, **kwargs):
     # Offset
     if offset != 0:
         rma = rma.shift(offset)
+
+    # Handle fills
+    if "fillna" in kwargs:
+        rma.fillna(kwargs["fillna"], inplace=True)
+    if "fill_method" in kwargs:
+        rma.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     rma.name = f"RMA_{length}"

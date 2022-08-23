@@ -149,12 +149,15 @@ class TestUtilities(TestCase):
         result = self.utils.df_dates(self.data, ["1999-11-01", "2020-08-15", "2020-08-24", "2020-08-25", "2020-08-26", "2020-08-27"])
         self.assertEqual(5, result.shape[0])
 
+    @skip
     def test_df_month_to_date(self):
         result = self.utils.df_month_to_date(self.data)
 
+    @skip
     def test_df_quarter_to_date(self):
         result = self.utils.df_quarter_to_date(self.data)
 
+    @skip
     def test_df_year_to_date(self):
         result = self.utils.df_year_to_date(self.data)
 
@@ -274,6 +277,18 @@ class TestUtilities(TestCase):
         npt.assert_array_equal(self.utils.symmetric_triangle(n=5), array_5)
         npt.assert_array_equal(self.utils.symmetric_triangle(n=5, weighted=True), array_5w)
 
+    def test_tal_ma(self):
+        self.assertEqual(self.utils.tal_ma("sma"), 0)
+        self.assertEqual(self.utils.tal_ma("Sma"), 0)
+        self.assertEqual(self.utils.tal_ma("ema"), 1)
+        self.assertEqual(self.utils.tal_ma("wma"), 2)
+        self.assertEqual(self.utils.tal_ma("dema"), 3)
+        self.assertEqual(self.utils.tal_ma("tema"), 4)
+        self.assertEqual(self.utils.tal_ma("trima"), 5)
+        self.assertEqual(self.utils.tal_ma("kama"), 6)
+        self.assertEqual(self.utils.tal_ma("mama"), 7)
+        self.assertEqual(self.utils.tal_ma("t3"), 8)
+
     def test_zero(self):
         self.assertEqual(self.utils.zero(-0.0000000000000001), 0)
         self.assertEqual(self.utils.zero(0), 0)
@@ -303,7 +318,7 @@ class TestUtilities(TestCase):
     def test_to_utc(self):
         result = self.utils.to_utc(self.data.copy())
         self.assertTrue(is_datetime64_ns_dtype(result.index))
-        self.assertTrue(is_datetime64tz_dtype(result.index))        
+        self.assertTrue(is_datetime64tz_dtype(result.index))
 
     def test_total_time(self):
         result = self.utils.total_time(self.data)

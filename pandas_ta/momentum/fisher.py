@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
 from numpy import log as nplog
-from numpy import NaN as npNaN
+from numpy import nan as npNaN
 from pandas import DataFrame, Series
-from pandas_ta.overlap import ema, hl2
-from pandas_ta.utils import get_offset, high_low_range, verify_series, zero
+from pandas_ta.overlap import hl2
+from pandas_ta.utils import get_offset, high_low_range, verify_series
 
 
 def fisher(high, low, length=None, signal=None, offset=None, **kwargs):
     """Indicator: Fisher Transform (FISHT)"""
     # Validate Arguments
-    high = verify_series(high)
-    low = verify_series(low)
     length = int(length) if length and length > 0 else 9
     signal = int(signal) if signal and signal > 0 else 1
+    _length = max(length, signal)
+    high = verify_series(high, _length)
+    low = verify_series(low, _length)
     offset = get_offset(offset)
+
+    if high is None or low is None: return
 
     # Calculate Result
     hl2_ = hl2(high, low)
@@ -29,11 +32,9 @@ def fisher(high, low, length=None, signal=None, offset=None, **kwargs):
     m = high.size
     result = [npNaN for _ in range(0, length - 1)] + [0]
     for i in range(length, m):
-        v = 0.66 * position[i] + 0.67 * v
-        if v < -0.99:
-            v = -0.999
-        if v > 0.99:
-            v = 0.999
+        v = 0.66 * position.iloc[i] + 0.67 * v
+        if v < -0.99: v = -0.999
+        if v > 0.99: v = 0.999
         result.append(0.5 * (nplog((1 + v) / (1 - v)) + result[i - 1]))
     fisher = Series(result, index=high.index)
     signalma = fisher.shift(signal)

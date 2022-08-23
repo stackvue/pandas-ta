@@ -6,10 +6,12 @@ from pandas_ta.utils import get_offset, verify_series
 def mad(close, length=None, offset=None, **kwargs):
     """Indicator: Mean Absolute Deviation"""
     # Validate Arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 30
     min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
+    close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
+
+    if close is None: return
 
     # Calculate Result
     def mad_(series):
@@ -21,6 +23,12 @@ def mad(close, length=None, offset=None, **kwargs):
     # Offset
     if offset != 0:
         mad = mad.shift(offset)
+
+    # Handle fills
+    if "fillna" in kwargs:
+        mad.fillna(kwargs["fillna"], inplace=True)
+    if "fill_method" in kwargs:
+        mad.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     mad.name = f"MAD_{length}"

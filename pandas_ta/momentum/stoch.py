@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-
 from pandas import DataFrame
-from pandas_ta.overlap import sma
+from pandas_ta.overlap import ma
 from pandas_ta.utils import get_offset, non_zero_range, verify_series
 
 
-def stoch(high, low, close, k=None, d=None, smooth_k=None, offset=None, **kwargs):
+def stoch(high, low, close, k=None, d=None, smooth_k=None, mamode=None, offset=None, **kwargs):
     """Indicator: Stochastic Oscillator (STOCH)"""
     # Validate arguments
-    high = verify_series(high)
-    low = verify_series(low)
-    close = verify_series(close)
     k = k if k and k > 0 else 14
     d = d if d and d > 0 else 3
     smooth_k = smooth_k if smooth_k and smooth_k > 0 else 3
+    _length = max(k, d, smooth_k)
+    high = verify_series(high, _length)
+    low = verify_series(low, _length)
+    close = verify_series(close, _length)
     offset = get_offset(offset)
+    mamode = mamode if isinstance(mamode, str) else "sma"
+
+    if high is None or low is None or close is None: return
 
     # Calculate Result
     lowest_low = low.rolling(k).min()
@@ -22,8 +26,8 @@ def stoch(high, low, close, k=None, d=None, smooth_k=None, offset=None, **kwargs
     stoch = 100 * (close - lowest_low)
     stoch /= non_zero_range(highest_high, lowest_low)
 
-    stoch_k = sma(stoch, length=smooth_k)
-    stoch_d = sma(stoch_k, length=d)
+    stoch_k = ma(mamode, stoch.loc[stoch.first_valid_index():,], length=smooth_k)
+    stoch_d = ma(mamode, stoch_k.loc[stoch_k.first_valid_index():,], length=d)
 
     # Offset
     if offset != 0:
@@ -50,7 +54,6 @@ def stoch(high, low, close, k=None, d=None, smooth_k=None, offset=None, **kwargs
     df = DataFrame(data)
     df.name = f"{_name}{_props}"
     df.category = stoch_k.category
-
     return df
 
 
@@ -88,6 +91,7 @@ Args:
     k (int): The Fast %K period. Default: 14
     d (int): The Slow %K period. Default: 3
     smooth_k (int): The Slow %D period. Default: 3
+    mamode (str): See ```help(ta.ma)```. Default: 'sma'
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

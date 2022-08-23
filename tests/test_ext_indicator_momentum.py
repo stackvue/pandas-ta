@@ -68,6 +68,11 @@ class TestMomentumExtension(TestCase):
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "COPC_11_14_10")
 
+    def test_cti_ext(self):
+        self.data.ta.cti(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "CTI_12")
+
     def test_er_ext(self):
         self.data.ta.er(append=True)
         self.assertIsInstance(self.data, DataFrame)
@@ -192,10 +197,26 @@ class TestMomentumExtension(TestCase):
 
         self.data.ta.squeeze(tr=False, append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-4:]),
+        self.assertEqual(list(self.data.columns[-4:]),
             ["SQZ_ON", "SQZ_OFF", "SQZ_NO", "SQZhlr_20_2.0_20_1.5"]
         )
+
+    def test_squeeze_pro_ext(self):
+        self.data.ta.squeeze_pro(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-4:]), ["SQZPRO_ON_NORMAL", "SQZPRO_ON_NARROW", "SQZPRO_OFF", "SQZPRO_NO"])
+
+        self.data.ta.squeeze_pro(tr=False, append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(
+            list(self.data.columns[-4:]),
+            ["SQZPRO_ON_NARROW", "SQZPRO_OFF", "SQZPRO_NO", "SQZPROhlr_20_2.0_20_2_1.5_1"]
+        )
+
+    def test_stc_ext(self):
+        self.data.ta.stc(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-3:]), ["STC_10_12_26_0.5", "STCmacd_10_12_26_0.5", "STCstoch_10_12_26_0.5"])
 
     def test_stoch_ext(self):
         self.data.ta.stoch(append=True)
@@ -207,6 +228,17 @@ class TestMomentumExtension(TestCase):
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(list(self.data.columns[-2:]), ["STOCHRSIk_14_14_3_3", "STOCHRSId_14_14_3_3"])
 
+    @skip
+    def test_td_seq_ext(self):
+        """TS Sequential DataFrame: Working but SLOW implementation"""
+        self.data.ta.td_seq(show_all=False, append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-2:]), ["TD_SEQ_UP", "TD_SEQ_DN"])
+
+        self.data.ta.td_seq(show_all=True, append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-2:]), ["TD_SEQ_UPa", "TD_SEQ_DNa"])
+
     def test_trix_ext(self):
         self.data.ta.trix(append=True)
         self.assertIsInstance(self.data, DataFrame)
@@ -215,7 +247,7 @@ class TestMomentumExtension(TestCase):
     def test_tsi_ext(self):
         self.data.ta.tsi(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "TSI_13_25")
+        self.assertEqual(list(self.data.columns[-2:]), ["TSI_13_25_13", "TSIs_13_25_13"])
 
     def test_uo_ext(self):
         self.data.ta.uo(append=True)

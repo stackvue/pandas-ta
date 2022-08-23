@@ -3,7 +3,7 @@ from datetime import datetime
 from time import localtime, perf_counter
 from typing import Tuple
 
-from pandas import DataFrame, Series, Timestamp
+from pandas import DataFrame, Timestamp
 
 from pandas_ta import EXCHANGE_TZ, RATE
 
@@ -18,7 +18,9 @@ def df_dates(df: DataFrame, dates: Tuple[str, list] = None) -> DataFrame:
 
 def df_month_to_date(df: DataFrame) -> DataFrame:
     """Yields the Month-to-Date (MTD) DataFrame"""
-    return df[df.index >= Timestamp.now().strftime("%Y-%m-01")]
+    in_mtd = df.index >= Timestamp.now().strftime("%Y-%m-01")
+    if any(in_mtd): return df[in_mtd]
+    return df
 
 
 def df_quarter_to_date(df: DataFrame) -> DataFrame:
@@ -26,13 +28,16 @@ def df_quarter_to_date(df: DataFrame) -> DataFrame:
     now = Timestamp.now()
     for m in [1, 4, 7, 10]:
         if now.month <= m:
-            return df[df.index >= datetime(now.year, m, 1).strftime("%Y-%m-01")]
+                in_qtr = df.index >= datetime(now.year, m, 1).strftime("%Y-%m-01")
+                if any(in_qtr): return df[in_qtr]
     return df[df.index >= now.strftime("%Y-%m-01")]
 
 
 def df_year_to_date(df: DataFrame) -> DataFrame:
     """Yields the Year-to-Date (YTD) DataFrame"""
-    return df[df.index >= Timestamp.now().strftime("%Y-01-01")]
+    in_ytd = df.index >= Timestamp.now().strftime("%Y-01-01")
+    if any(in_ytd): return df[in_ytd]
+    return df
 
 
 def final_time(stime: float) -> str:
@@ -60,21 +65,22 @@ def get_time(exchange: str = "NYSE", full:bool = True, to_string:bool = False) -
     if full:
         lt = localtime()
         local_ = f"Local: {lt.tm_hour}:{lt.tm_min:02d}:{lt.tm_sec:02d} {lt.tm_zone}"
-        doy = f"Day {today.dayofyear}/365 ({100 * round(today.dayofyear/365, 2)}%)"
+        doy = f"Day {today.dayofyear}/365 ({100 * round(today.dayofyear/365, 2):.2f}%)"
         exchange_ = f"{exchange}: {exchange_time}"
 
         s = f"{date}, {exchange_}, {local_}, {doy}"
     else:
-        s = f"{exchange}: {exchange_time}"
+        s = f"{date}, {exchange}: {exchange_time}"
 
     return s if to_string else print(s)
 
 
-def total_time(series: Series, tf: str = "years") -> float:
-    """Calculates the total time of a Series. Options: 'months', 'weeks',
-    'days', 'hours', 'minutes' and 'seconds'. Default: 'years'.
+def total_time(df: DataFrame, tf: str = "years") -> float:
+    """Calculates the total time of a DataFrame. Difference of the Last and
+    First index. Options: 'months', 'weeks', 'days', 'hours', 'minutes'
+    and 'seconds'. Default: 'years'.
     Useful for annualization."""
-    time_diff = series.index[-1] - series.index[0]
+    time_diff = df.index[-1] - df.index[0]
     TimeFrame = {
         "years": time_diff.days / RATE["TRADING_DAYS_PER_YEAR"],
         "months": time_diff.days / 30.417,
@@ -103,6 +109,6 @@ def to_utc(df: DataFrame) -> DataFrame:
 
 
 # Aliases
-mtd_df = df_month_to_date
-qtd_df = df_quarter_to_date
-ytd_df = df_year_to_date
+mtd = df_month_to_date
+qtd = df_quarter_to_date
+ytd = df_year_to_date

@@ -1,28 +1,37 @@
 # -*- coding: utf-8 -*-
 from pandas import DataFrame
-from pandas_ta.overlap import ema, sma
-from pandas_ta.utils import get_offset, verify_series
+from pandas_ta import Imports
+from pandas_ta.overlap import ma
+from pandas_ta.utils import get_offset, tal_ma, verify_series
 
 
-def ppo(close, fast=None, slow=None, signal=None, scalar=None, offset=None, **kwargs):
+def ppo(close, fast=None, slow=None, signal=None, scalar=None, mamode=None, talib=None, offset=None, **kwargs):
     """Indicator: Percentage Price Oscillator (PPO)"""
     # Validate Arguments
-    close = verify_series(close)
     fast = int(fast) if fast and fast > 0 else 12
     slow = int(slow) if slow and slow > 0 else 26
     signal = int(signal) if signal and signal > 0 else 9
     scalar = float(scalar) if scalar else 100
+    mamode = mamode if isinstance(mamode, str) else "sma"
     if slow < fast:
         fast, slow = slow, fast
+    close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
+
+    if close is None: return
 
     # Calculate Result
-    fastma = sma(close, length=fast)
-    slowma = sma(close, length=slow)
-    ppo = scalar * (fastma - slowma)
-    ppo /= slowma
+    if Imports["talib"] and mode_tal:
+        from talib import PPO
+        ppo = PPO(close, fast, slow, tal_ma(mamode))
+    else:
+        fastma = ma(mamode, close, length=fast)
+        slowma = ma(mamode, close, length=slow)
+        ppo = scalar * (fastma - slowma)
+        ppo /= slowma
 
-    signalma = ema(ppo, length=signal)
+    signalma = ma("ema", ppo, length=signal)
     histogram = ppo - signalma
 
     # Offset
@@ -82,6 +91,9 @@ Args:
     slow(int): The long period. Default: 26
     signal(int): The signal period. Default: 9
     scalar (float): How much to magnify. Default: 100
+    mamode (str): See ```help(ta.ma)```. Default: 'sma'
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     offset(int): How many periods to offset the result. Default: 0
 
 Kwargs:
