@@ -6,10 +6,12 @@ from pandas_ta.utils import get_offset, verify_series
 def entropy(close, length=None, base=None, offset=None, **kwargs):
     """Indicator: Entropy (ENTP)"""
     # Validate Arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 10
     base = float(base) if base and base > 0 else 2.0
+    close = verify_series(close, length)
     offset = get_offset(offset)
+
+    if close is None: return
 
     # Calculate Result
     p = close / close.rolling(length).sum()
@@ -18,6 +20,12 @@ def entropy(close, length=None, base=None, offset=None, **kwargs):
     # Offset
     if offset != 0:
         entropy = entropy.shift(offset)
+
+    # Handle fills
+    if "fillna" in kwargs:
+        entropy.fillna(kwargs["fillna"], inplace=True)
+    if "fill_method" in kwargs:
+        entropy.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     entropy.name = f"ENTP_{length}"

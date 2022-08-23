@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
-import math
+from numpy import array as npArray
+from numpy import arctan as npAtan
+from numpy import nan as npNaN
+from numpy import pi as npPi
+from numpy.version import version as npVersion
+from pandas import Series
 from pandas_ta.utils import get_offset, verify_series
 
 
 def linreg(close, length=None, offset=None, **kwargs):
     """Indicator: Linear Regression"""
     # Validate arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 14
+    close = verify_series(close, length)
     offset = get_offset(offset)
     angle = kwargs.pop("angle", False)
     intercept = kwargs.pop("intercept", False)
@@ -15,6 +20,8 @@ def linreg(close, length=None, offset=None, **kwargs):
     r = kwargs.pop("r", False)
     slope = kwargs.pop("slope", False)
     tsf = kwargs.pop("tsf", False)
+
+    if close is None: return
 
     # Calculate Result
     x = range(1, length + 1)  # [1, 2, ..., n] from 1 to n keeps Sum(xy) low
@@ -34,20 +41,33 @@ def linreg(close, length=None, offset=None, **kwargs):
             return b
 
         if angle:
-            theta = math.atan(m)
+            theta = npAtan(m)
             if degrees:
-                theta *= 180 / math.pi
+                theta *= 180 / npPi
             return theta
 
         if r:
             y2_sum = (series * series).sum()
             rn = length * xy_sum - x_sum * y_sum
-            rd = math.sqrt(divisor * (length * y2_sum - y_sum * y_sum))
+            rd = (divisor * (length * y2_sum - y_sum * y_sum)) ** 0.5
             return rn / rd
 
         return m * length + b if tsf else m * (length - 1) + b
 
-    linreg = close.rolling(length, min_periods=length).apply(linear_regression, raw=False)
+    def rolling_window(array, length):
+        """https://github.com/twopirllc/pandas-ta/issues/285"""
+        strides = array.strides + (array.strides[-1],)
+        shape = array.shape[:-1] + (array.shape[-1] - length + 1, length)
+        return as_strided(array, shape=shape, strides=strides)
+
+    if npVersion >= "1.20.0":
+        from numpy.lib.stride_tricks import sliding_window_view
+        linreg_ = [linear_regression(_) for _ in sliding_window_view(npArray(close), length)]
+    else:
+        from numpy.lib.stride_tricks import as_strided
+        linreg_ = [linear_regression(_) for _ in rolling_window(npArray(close), length)]
+
+    linreg = Series([npNaN] * (length - 1) + linreg_, index=close.index)
 
     # Offset
     if offset != 0:
@@ -65,6 +85,7 @@ def linreg(close, length=None, offset=None, **kwargs):
     if intercept: linreg.name += "b"
     if angle: linreg.name += "a"
     if r: linreg.name += "r"
+
     linreg.name += f"_{length}"
     linreg.category = "overlap"
 

@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
 from pandas import DataFrame
-from pandas_ta.overlap import rma
+from pandas_ta.overlap import ma
 from pandas_ta.volatility import atr
 from pandas_ta.utils import get_drift, get_offset, verify_series, zero
 
 
-def adx(high, low, close, length=None, scalar=None, drift=None, offset=None, **kwargs):
+def adx(high, low, close, length=None, lensig=None, scalar=None, mamode=None, drift=None, offset=None, **kwargs):
     """Indicator: ADX"""
     # Validate Arguments
-    high = verify_series(high)
-    low = verify_series(low)
-    close = verify_series(close)
     length = length if length and length > 0 else 14
+    lensig = lensig if lensig and lensig > 0 else length
+    mamode = mamode if isinstance(mamode, str) else "rma"
     scalar = float(scalar) if scalar else 100
+    high = verify_series(high, length)
+    low = verify_series(low, length)
+    close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
+
+    if high is None or low is None or close is None: return
 
     # Calculate Result
     atr_ = atr(high=high, low=low, close=close, length=length)
@@ -29,11 +33,11 @@ def adx(high, low, close, length=None, scalar=None, drift=None, offset=None, **k
     neg = neg.apply(zero)
 
     k = scalar / atr_
-    dmp = k * rma(close=pos, length=length)
-    dmn = k * rma(close=neg, length=length)
+    dmp = k * ma(mamode, pos, length=length)
+    dmn = k * ma(mamode, neg, length=length)
 
     dx = scalar * (dmp - dmn).abs() / (dmp + dmn)
-    adx = rma(close=dx, length=length)
+    adx = ma(mamode, dx, length=lensig)
 
     # Offset
     if offset != 0:
@@ -52,7 +56,7 @@ def adx(high, low, close, length=None, scalar=None, drift=None, offset=None, **k
         dmn.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name and Categorize it
-    adx.name = f"ADX_{length}"
+    adx.name = f"ADX_{lensig}"
     dmp.name = f"DMP_{length}"
     dmn.name = f"DMN_{length}"
 
@@ -61,7 +65,7 @@ def adx(high, low, close, length=None, scalar=None, drift=None, offset=None, **k
     # Prepare DataFrame to return
     data = {adx.name: adx, dmp.name: dmp, dmn.name: dmn}
     adxdf = DataFrame(data)
-    adxdf.name = f"ADX_{length}"
+    adxdf.name = f"ADX_{lensig}"
     adxdf.category = "trend"
 
     return adxdf
@@ -131,8 +135,10 @@ Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    length (int): It's period.  Default: 14
+    length (int): It's period. Default: 14
+    lensig (int): Signal Length. Like TradingView's default ADX. Default: length
     scalar (float): How much to magnify. Default: 100
+    mamode (str): See ```help(ta.ma)```. Default: 'rma'
     drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 

@@ -4,15 +4,20 @@ from .midprice import midprice
 from pandas_ta.utils import get_offset, verify_series
 
 
-def ichimoku(high, low, close, tenkan=None, kijun=None, senkou=None, offset=None, **kwargs):
+def ichimoku(high, low, close, tenkan=None, kijun=None, senkou=None, include_chikou=True, offset=None, **kwargs):
     """Indicator: Ichimoku Kinkō Hyō (Ichimoku)"""
-    high = verify_series(high)
-    low = verify_series(low)
-    close = verify_series(close)
     tenkan = int(tenkan) if tenkan and tenkan > 0 else 9
     kijun = int(kijun) if kijun and kijun > 0 else 26
     senkou = int(senkou) if senkou and senkou > 0 else 52
+    _length = max(tenkan, kijun, senkou)
+    high = verify_series(high, _length)
+    low = verify_series(low, _length)
+    close = verify_series(close, _length)
     offset = get_offset(offset)
+    if not kwargs.get("lookahead", True):
+        include_chikou = False
+
+    if high is None or low is None or close is None: return None, None
 
     # Calculate Result
     tenkan_sen = midprice(high=high, low=low, length=tenkan)
@@ -62,8 +67,10 @@ def ichimoku(high, low, close, tenkan=None, kijun=None, senkou=None, offset=None
         span_b.name: span_b,
         tenkan_sen.name: tenkan_sen,
         kijun_sen.name: kijun_sen,
-        chikou_span.name: chikou_span,
     }
+    if include_chikou:
+        data[chikou_span.name] = chikou_span
+
     ichimokudf = DataFrame(data)
     ichimokudf.name = f"ICHIMOKU_{tenkan}_{kijun}_{senkou}"
     ichimokudf.category = "overlap"
@@ -118,6 +125,7 @@ Args:
     tenkan (int): Tenkan period. Default: 9
     kijun (int): Kijun period. Default: 26
     senkou (int): Senkou period. Default: 52
+    include_chikou (bool): Whether to include chikou component. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

@@ -26,7 +26,7 @@ class TestTrendExtension(TestCase):
     def test_amat_ext(self):
         self.data.ta.amat(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-2:]), ["AMATe_LR_2", "AMATe_SR_2"])
+        self.assertEqual(list(self.data.columns[-2:]), ["AMATe_LR_8_21_2", "AMATe_SR_8_21_2"])
 
     def test_aroon_ext(self):
         self.data.ta.aroon(append=True)
@@ -34,14 +34,23 @@ class TestTrendExtension(TestCase):
         self.assertEqual(list(self.data.columns[-3:]), ["AROOND_14", "AROONU_14", "AROONOSC_14"])
 
     def test_chop_ext(self):
-        self.data.ta.chop(append=True)
+        self.data.ta.chop(append=True, ln=False)
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "CHOP_14_1_100")
 
-    def test_cksp_ext(self):
-        self.data.ta.cksp(append=True)
+        self.data.ta.chop(append=True, ln=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "CKSPs_10_1_9")
+        self.assertEqual(self.data.columns[-1], "CHOPln_14_1_100")
+
+    def test_cksp_ext(self):
+        self.data.ta.cksp(tvmode=False, append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-2:]), ["CKSPl_10_3_20", "CKSPs_10_3_20"])
+
+    def test_cksp_tv_ext(self):
+        self.data.ta.cksp(tvmode=True, append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-2:]), ["CKSPl_10_1_9", "CKSPs_10_1_9"])
 
     def test_decay_ext(self):
         self.data.ta.decay(append=True)

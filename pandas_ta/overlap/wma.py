@@ -1,38 +1,52 @@
 # -*- coding: utf-8 -*-
-from numpy import arange as npArange
-from numpy import dot as npDot
 from pandas import Series
+from pandas_ta import Imports
 from pandas_ta.utils import get_offset, verify_series
 
 
-def wma(close, length=None, asc=None, offset=None, **kwargs):
+def wma(close, length=None, asc=None, talib=None, offset=None, **kwargs):
     """Indicator: Weighted Moving Average (WMA)"""
     # Validate Arguments
-    close = verify_series(close)
     length = int(length) if length and length > 0 else 10
     asc = asc if asc is not None else True
+    close = verify_series(close, length)
     offset = get_offset(offset)
     factor = float(kwargs.get("factor", 1))
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    if close is None: return
 
     # Calculate Result
-    weights_ = Series(npArange(1, length + 1))
-    if factor is not None:
-        weights_ = weights_ ** factor
+    if Imports["talib"] and mode_tal:
+        from talib import WMA
+        wma = WMA(close, length)
+    else:
+        from numpy import arange as npArange
+        from numpy import dot as npDot
 
-    total_weight = weights_.sum()
-    weights = weights_ if asc else weights_[::-1]
+        weights_ = Series(npArange(1, length + 1))
+        if factor is not None:
+            weights_ = weights_ ** factor
 
-    def linear(w):
-        def _compute(x):
-            return npDot(x, w) / total_weight
-        return _compute
+        total_weight = weights_.sum()
+        weights = weights_ if asc else weights_[::-1]
 
-    close_ = close.rolling(length, min_periods=length)
-    wma = close_.apply(linear(weights), raw=True)
+        def linear(w):
+            def _compute(x):
+                return npDot(x, w) / total_weight
+            return _compute
+
+        close_ = close.rolling(length, min_periods=length)
+        wma = close_.apply(linear(weights), raw=True)
 
     # Offset
     if offset != 0:
         wma = wma.shift(offset)
+
+    # Handle fills
+    if "fillna" in kwargs:
+        wma.fillna(kwargs["fillna"], inplace=True)
+    if "fill_method" in kwargs:
+        wma.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     wma.name = f"WMA_{length}"
@@ -69,6 +83,8 @@ Args:
     length (int): It's period. Default: 10
     factor (int): Weight Factor. Default: 1
     asc (bool): Recent values weigh more. Default: True
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
