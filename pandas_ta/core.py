@@ -417,6 +417,7 @@ class AnalysisIndicators(BasePandasObject):
                         for col in result.columns:
                             ind_name = col_names[i] if i < col_len else col
                             col_name = tuple((multi_index_prefix or []) + [ind_name] + (multi_index_suffix or []))
+                            col_name = col_name if len(col_name) > 1 else col_name[0]
                             df[col_name] = result.loc[:, col]
                             i += 1
                         # else:
@@ -427,12 +428,14 @@ class AnalysisIndicators(BasePandasObject):
                     else:
                         for i, column in enumerate(result.columns):
                             col_name = tuple((multi_index_prefix or []) + [column] + (multi_index_suffix or []))
+                            col_name = col_name if len(col_name) > 1 else col_name[0]
                             df[col_name] = result.iloc[:, i]
                 else:
                     ind_name = (
                         kwargs["col_names"][0] if "col_names" in kwargs and
                         isinstance(kwargs["col_names"], tuple) else result.name)
                     col_name = tuple((multi_index_prefix or []) + [ind_name] + (multi_index_suffix or []))
+                    col_name = col_name if len(col_name) > 1 else col_name[0]
                     df[col_name] = result
 
     def _check_na_columns(self, stdout: bool = True):
@@ -1845,3 +1848,11 @@ class AnalysisIndicators(BasePandasObject):
         volume = self._get_column(kwargs.pop("volume", "volume"))
         result = vp(close=close, volume=volume, width=width, percent=percent, **kwargs)
         return self._post_process(result, **kwargs)
+
+    def expr(self, expression=None, offset=None, **kwargs):
+        a = self._get_column(kwargs.pop("a", "a"))
+        b = self._get_column(kwargs.pop("b", "b"))
+        result = expr(series_a=a, series_b=b, expression=expression, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+
