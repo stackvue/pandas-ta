@@ -10,3 +10,4 @@ from .smv import smv
 from .smart_trend import smart_trend
 from .hlb import hlb
 from .half_trend import half_trend
+from .expr import expr
