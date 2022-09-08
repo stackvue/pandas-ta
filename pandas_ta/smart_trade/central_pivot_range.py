@@ -30,6 +30,11 @@ def cpr(high, low, close, offset, **kwargs):
     df["Pivot"] = df.apply(lambda row: cpr_dict[row.name.date()]["pivot"], axis=1)
     df["Bottom_CPR"] = df.apply(lambda row: cpr_dict[row.name.date()]["bottom_cpr"], axis=1)
     df["Top_CPR"] = df.apply(lambda row: cpr_dict[row.name.date()]["top_cpr"], axis=1)
+    df["CW"] = (df["Top_CPR"] - df["Bottom_CPR"]) / 2
+    df["S2"] = df["Pivot"] - 2 * df["CW"]
+    df["R2"] = df["Pivot"] + 2 * df["CW"]
+    df["S3"] = df["Pivot"] - 3 * df["CW"]
+    df["R3"] = df["Pivot"] + 3 * df["CW"]
     df.drop("close", axis=1, inplace=True)
 
     df.name = "Central_Pivot_Range"
