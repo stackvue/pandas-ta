@@ -1079,9 +1079,9 @@ class AnalysisIndicators(BasePandasObject):
         result = cattr(open_=open_, high=high, low=low, close=close, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def caggr(self, agg_type, col_name, group_by=None, group_on=None, **kwargs):
+    def caggr(self, agg_types, col_name, group_by=None, group_on=None, **kwargs):
         column = self._get_column(col_name)
-        result = caggr(column=column, group_by=group_by, group_on=group_on, agg_type=agg_type, **kwargs)
+        result = caggr(column=column, group_by=group_by, group_on=group_on, agg_types=agg_types, **kwargs)
         return self._post_process(result, **kwargs)
     
     def hl2(self, offset=None, **kwargs):
