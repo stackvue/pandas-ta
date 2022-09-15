@@ -11,3 +11,5 @@ from .smart_trend import smart_trend
 from .hlb import hlb
 from .half_trend import half_trend
 from .expr import expr
+from .candle_type import cattr
+from .candle_aggregation import caggr
