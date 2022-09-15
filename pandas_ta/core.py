@@ -1253,6 +1253,19 @@ class AnalysisIndicators(BasePandasObject):
         result = smart_trend(open_=open_, close=close, length=length, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def cattr(self, offset=None, **kwargs):
+        open_ = self._get_column(kwargs.pop("open", "open"))
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = cattr(open_=open_, high=high, low=low, close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def caggr(self, agg_types, col_name, group_by=None, group_on=None, **kwargs):
+        column = self._get_column(col_name)
+        result = caggr(column=column, group_by=group_by, group_on=group_on, agg_types=agg_types, **kwargs)
+        return self._post_process(result, **kwargs)
+    
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
