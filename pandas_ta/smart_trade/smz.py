@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pandas as pd
 from pandas import DataFrame
 
 from pandas_ta.utils import get_offset, verify_series
@@ -12,10 +13,15 @@ def smz(high, low, length=None, offset=None, **kwargs):
     length = int(length) if length and length > 0 else 10
     min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     offset = get_offset(offset)
-
+    group_by = kwargs.get("anchor")
     # Calculate Result
-    smh = high.rolling(length, min_periods=min_periods).max()
-    sml = low.rolling(length, min_periods=min_periods).min()
+    if group_by:
+        grouper = pd.Grouper(freq=group_by)
+        smh = high.groupby(grouper).transform(lambda s: s.rolling(length, min_periods=min_periods).max())
+        sml = low.groupby(grouper).transform(lambda s: s.rolling(length, min_periods=min_periods).min())
+    else:
+        smh = high.rolling(length, min_periods=min_periods).max()
+        sml = low.rolling(length, min_periods=min_periods).min()
 
     # Offset
     if offset != 0:
