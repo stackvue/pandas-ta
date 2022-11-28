@@ -16,7 +16,13 @@ def hlb(high, low, start_candle=0, end_candle=0, offset=None, **kwargs):
     df = DataFrame({"HLB_HIGH": high, "HLB_LOW": low})
     df.name = f"HILO_BLOCK"
     df.category = "smart-trade"
+
     grouped = df.groupby(pd.Grouper(freq='D'))
+    block_size = kwargs.get("block_size", 0)
+    if block_size:
+        candle_number = (grouped.cumcount() / block_size).astype(int)
+        grouped = df.groupby([pd.Grouper(freq='D'), candle_number])
+
     candle_number = grouped.cumcount() + 1
 
     block = candle_number >= start_candle
