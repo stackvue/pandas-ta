@@ -20,6 +20,8 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
     decay = kwargs.get("decay", 0)
     u_decay = kwargs.get("u_decay", decay) / 100
     l_decay = kwargs.get("l_decay", decay) / 100
+    intraday = kwargs.get("intraday", True)
+
 
     # Prepare DataFrame to return
     df = DataFrame({"close": close})
@@ -42,7 +44,10 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
         lower = df.loc[index, "HLZ_LOW"] = broken_close - lower_delta
         if not lower < row["close"] < upper:
             add_zone = False
-            value = 1 if row["close"] >= upper else -1
+            if intraday and index.date() != prev_date:
+                value = 0
+            else:
+                value = 1 if row["close"] >= upper else -1
             df.loc[index, "HLZ_BREAK"] = value
             df.loc[index, "HLZ_ZONE"] = value
             upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
