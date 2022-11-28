@@ -36,8 +36,6 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
         if index.date() != prev_date:
             upper_delta, lower_delta  = prepare_boundary(prev_close, mode, u_bound, l_bound)
             broken_close = prev_close
-        prev_close = row["close"]
-        prev_date = index.date()
         upper_delta *= (1-u_decay)
         lower_delta *= (1-l_decay)
         upper = df.loc[index, "HLZ_HIGH"] = broken_close + upper_delta
@@ -54,6 +52,8 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
             broken_close = row["close"]
         else:
             df.loc[index, "HLZ_BREAK"] = 0
+        prev_date = index.date()
+        prev_close = row["close"]
 
     if add_zone:
         df["HLZ_ZONE"] = 0
