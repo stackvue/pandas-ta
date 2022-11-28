@@ -20,7 +20,7 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
     decay = kwargs.get("decay", 0)
     u_decay = kwargs.get("u_decay", decay) / 100
     l_decay = kwargs.get("l_decay", decay) / 100
-    intraday = kwargs.get("intraday", True)
+    intraday = kwargs.get("intraday", False)
 
 
     # Prepare DataFrame to return
