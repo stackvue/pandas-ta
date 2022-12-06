@@ -34,18 +34,18 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
     add_zone = True
     for index, row in df.iterrows():
         if index.date() != prev_date:
-            upper_delta, lower_delta  = prepare_boundary(prev_close, mode, u_bound, l_bound)
-            broken_close = prev_close
+            if intraday:
+                broken_close = row["close"]
+            else:
+                broken_close = prev_close
+            upper_delta, lower_delta  = prepare_boundary(broken_close, mode, u_bound, l_bound)
         upper_delta *= (1-u_decay)
         lower_delta *= (1-l_decay)
         upper = df.loc[index, "HLZ_HIGH"] = broken_close + upper_delta
         lower = df.loc[index, "HLZ_LOW"] = broken_close - lower_delta
         if not lower < row["close"] < upper:
             add_zone = False
-            if intraday and index.date() != prev_date:
-                value = 0
-            else:
-                value = 1 if row["close"] >= upper else -1
+            value = 1 if row["close"] >= upper else -1
             df.loc[index, "HLZ_BREAK"] = value
             df.loc[index, "HLZ_ZONE"] = value
             upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
@@ -57,8 +57,11 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
 
     if add_zone:
         df["HLZ_ZONE"] = 0
-    df["HLZ_ZONE"].fillna(inplace=True, method='ffill')
-    df["HLZ_ZONE"] = df["HLZ_ZONE"].groupby(Grouper(freq='D')).fillna(method='bfill')
+    if intraday:
+        df["HLZ_ZONE"] = df["HLZ_ZONE"].groupby(Grouper(freq='D')).fillna(method='ffill')
+    else:
+        df["HLZ_ZONE"].fillna(inplace=True, method='ffill')
+        df["HLZ_ZONE"] = df["HLZ_ZONE"].groupby(Grouper(freq='D')).fillna(method='bfill')
     df["HLZ_ZONE"].fillna(0, inplace=True)
 
     # Offset
