@@ -10,11 +10,12 @@ def prepare_boundary(close, mode, u_bound, l_bound):
     else:
         return close * u_bound / 100 , close * l_bound / 100
 
-def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
+def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, **kwargs):
     """Indicator: HILO_ZONE (HILO_ZONE)"""
     # Validate Arguments
     close = verify_series(close)
     offset = get_offset(offset)
+    anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
 
     mode = mode or "abs"
     decay = kwargs.get("decay", 0)
@@ -24,36 +25,41 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
 
 
     # Prepare DataFrame to return
-    df = DataFrame({"close": close})
+    df = DataFrame({"close": close, "HLZ_HIGH": close, "HLZ_LOW": close, })
     df.name = f"HILO_ZONE"
     df.category = "smart-trade"
 
-    prev_date = close.first_valid_index().date()
+    anchor_group = df.groupby(df.index.to_period(anchor))
     upper_delta, lower_delta = prepare_boundary(close.iloc[0], mode, u_bound, l_bound)
     broken_close = prev_close = close.iloc[0]
-    add_zone = True
-    for index, row in df.iterrows():
-        if index.date() != prev_date:
-            if intraday:
+    for anchor, anchor_close in anchor_group:
+        if intraday:
+            # prev_date = close.first_valid_index().date()
+            upper_delta, lower_delta = prepare_boundary(anchor_close.iloc[0]["close"], mode, u_bound, l_bound)
+            broken_close = prev_close = anchor_close.iloc[0]["close"]
+        add_zone = True
+        for index, row in anchor_close.iterrows():
+            # if index.date() != prev_date:
+            #     if intraday:
+            #         broken_close = row["close"]
+            #     else:
+            #         broken_close = prev_close
+            #     upper_delta, lower_delta  = prepare_boundary(broken_close, mode, u_bound, l_bound)
+            upper_delta *= (1-u_decay)
+            lower_delta *= (1-l_decay)
+            upper = df.loc[index, "HLZ_HIGH"] = (broken_close + upper_delta)
+            lower = df.loc[index, "HLZ_LOW"] = broken_close - lower_delta
+            if not lower < row["close"] < upper:
+                add_zone = False
+                value = 1 if row["close"] >= upper else -1
+                df.loc[index, "HLZ_BREAK"] = value
+                df.loc[index, "HLZ_ZONE"] = value
+                upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
                 broken_close = row["close"]
             else:
-                broken_close = prev_close
-            upper_delta, lower_delta  = prepare_boundary(broken_close, mode, u_bound, l_bound)
-        upper_delta *= (1-u_decay)
-        lower_delta *= (1-l_decay)
-        upper = df.loc[index, "HLZ_HIGH"] = broken_close + upper_delta
-        lower = df.loc[index, "HLZ_LOW"] = broken_close - lower_delta
-        if not lower < row["close"] < upper:
-            add_zone = False
-            value = 1 if row["close"] >= upper else -1
-            df.loc[index, "HLZ_BREAK"] = value
-            df.loc[index, "HLZ_ZONE"] = value
-            upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
-            broken_close = row["close"]
-        else:
-            df.loc[index, "HLZ_BREAK"] = 0
-        prev_date = index.date()
-        prev_close = row["close"]
+                df.loc[index, "HLZ_BREAK"] = 0
+            # prev_date = index.date()
+            # prev_close = row["close"]
 
     if add_zone:
         df["HLZ_ZONE"] = 0
