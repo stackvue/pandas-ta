@@ -69,6 +69,7 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
         df["HLZ_HIGH"] = df["HLZ_HIGH"].shift(offset)
         df["HLZ_LOW"] = df["HLZ_LOW"].shift(offset)
         df["HLZ_BREAK"] = df["HLZ_BREAK"].shift(offset)
+        df["HLZ_ZONE"] = df["HLZ_ZONE"].shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:
@@ -80,7 +81,7 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
         df["HLZ_LOW"].fillna(method=kwargs["fill_method"], inplace=True)
         df["HLZ_BREAK"].fillna(method=kwargs["fill_method"], inplace=True)
 
-    df["HLZ_HIGH"].category = df["HLZ_LOW"].category = df["HLZ_BREAK"].category = "smart-trade"
+    df["HLZ_HIGH"].category = df["HLZ_LOW"].category = df["HLZ_BREAK"].category = df["HLZ_ZONE"].category = "smart-trade"
     df.drop('close', axis=1, inplace=True)
     return df
 
