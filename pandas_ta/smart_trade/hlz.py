@@ -32,12 +32,12 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, **kwargs):
     anchor_group = df.groupby(df.index.to_period(anchor))
     upper_delta, lower_delta = prepare_boundary(close.iloc[0], mode, u_bound, l_bound)
     broken_close = prev_close = close.iloc[0]
+    add_zone = True
     for anchor_name, anchor_close in anchor_group:
         if intraday:
             # prev_date = close.first_valid_index().date()
             upper_delta, lower_delta = prepare_boundary(anchor_close.iloc[0]["close"], mode, u_bound, l_bound)
             broken_close = prev_close = anchor_close.iloc[0]["close"]
-        add_zone = True
         for index, row in anchor_close.iterrows():
             # if index.date() != prev_date:
             #     if intraday:
