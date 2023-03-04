@@ -5,23 +5,24 @@ from pandas_ta.utils import get_offset, verify_series
 import pandas as pd
 
 
-def hlb(high, low, start_candle=0, end_candle=0, offset=None, **kwargs):
+def hlb(high, low, start_candle=0, end_candle=0, anchor=None, offset=None, **kwargs):
     """Indicator: HILO_BLOCK (HILO_BLOCK)"""
     # Validate Arguments
     high = verify_series(high)
     low = verify_series(low)
     offset = get_offset(offset)
+    anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
 
     # Prepare DataFrame to return
     df = DataFrame({"HLB_HIGH": high, "HLB_LOW": low})
     df.name = f"HILO_BLOCK"
     df.category = "smart-trade"
 
-    grouped = df.groupby(pd.Grouper(freq='D'))
+    grouped = df.groupby(df.index.to_period(anchor))
     block_size = kwargs.get("block_size", 0)
     if block_size:
         candle_number = (grouped.cumcount() / block_size).astype(int)
-        grouped = df.groupby([pd.Grouper(freq='D'), candle_number])
+        grouped = df.groupby([df.index.to_period(anchor), candle_number])
 
     candle_number = grouped.cumcount() + 1
 
