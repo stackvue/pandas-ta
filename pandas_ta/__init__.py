@@ -86,7 +86,7 @@ Category = {
 
     # SmartTrade, "smart-trade" or "Smart Trade" is unique
     "smart-trade": [
-        "hilo_band", "rate", "cpr", "oc", "hlz", "az", "smz", "smv", "smart_trend", "hlb", "half_trend", "expr"
+        "hilo_band", "rate", "cpr", "oc", "hlz", "az", "smz", "smv", "smart_trend", "hlb", "half_trend", "expr", "nr"
     ],
 }
 
