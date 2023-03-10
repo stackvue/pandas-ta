@@ -6,7 +6,7 @@ from pandas import DataFrame
 from pandas_ta.utils import get_offset, verify_series
 
 
-def nr(close, src_start, src_end, dst_start, dst_end, exp=1, absolute=False, extrapolate=False, offset=None, **kwargs):
+def nr(close, src_start, src_end, dst_start, dst_end, exp=1, offset=None, **kwargs):
     """Indicator: Expr (expr)"""
 
     src_slope = src_end - src_start
@@ -14,7 +14,8 @@ def nr(close, src_start, src_end, dst_start, dst_end, exp=1, absolute=False, ext
     n_x = math.pow(dst_start, 1 / exp)
     n_y = math.pow(dst_end, 1 / exp)
     dest_slope = n_y - n_x
-
+    absolute = kwargs.get("absolute", True)
+    extrapolate = kwargs.get("extrapolate", True)
     close = verify_series(close)
     if absolute:
         close = close.abs()
@@ -69,6 +70,8 @@ nr.__doc__ = \
         dst_start (float): Destination Range Start Value
         dst_end (float): Destination Range End Value
         exp (float): Exponent: Default: 1
+        absolute (bool): True
+        extrapolate (bool): False
         offset (int): How many periods to offset the result. Default: 0
     
     Kwargs:
@@ -76,5 +79,5 @@ nr.__doc__ = \
         fill_method (value, optional): Type of fill method
     
     Returns:
-        pd.DataFrame: expr (line) columns.
+        pd.DataFrame: nr (line) columns.
     """
