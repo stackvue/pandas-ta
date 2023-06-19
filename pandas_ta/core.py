@@ -1407,11 +1407,14 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
+        grouper = kwargs.pop("grouper", None)
+        if grouper:
+            grouper = self._get_column(grouper)
 
         if not self.datetime_ordered:
             volume.index = self._df.index
 
-        result = vwap(high=high, low=low, close=close, volume=volume, anchor=anchor, offset=offset, **kwargs)
+        result = vwap(high=high, low=low, close=close, volume=volume, anchor=anchor, offset=offset, grouper=grouper, **kwargs)
         return self._post_process(result, **kwargs)
 
     def vwma(self, length=None, offset=None, **kwargs):
