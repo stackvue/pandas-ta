@@ -5,7 +5,7 @@ from pandas_ta.utils import get_offset, is_datetime_ordered, verify_series
 from .hlc3 import hlc3
 
 
-def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
+def vwap(high, low, close, volume, anchor=None, offset=None, grouper=None, **kwargs):
     """Indicator: Volume Weighted Average Price (VWAP)"""
     # Validate Arguments
     high = verify_series(high)
@@ -13,6 +13,10 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
     close = verify_series(close)
     volume = verify_series(volume)
     anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
+    grouper = verify_series(grouper)
+    anchors = [volume.index.to_period(anchor)]
+    if grouper is not None:
+        anchors.append(grouper)
     offset = get_offset(offset)
     factor = float(kwargs.get("factor", 0))
     factor_range = float(kwargs.get("factor_range", 0))
@@ -23,15 +27,15 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
         print(f"[!] VWAP price series is not datetime ordered. Results may not be as expected.")
     multiplier = None
     if factor or factor_range:
-        candles = volume.groupby(volume.index.to_period(anchor)).count().max()
-        multiplier = volume.groupby(volume.index.to_period(anchor)).cumcount().groupby(
-            volume.index.to_period(anchor)).transform(lambda x: (x + 1) ** (factor + factor_range * x / candles))
+        candles = volume.groupby(anchors).count().max()
+        multiplier = volume.groupby(anchors).cumcount().groupby(anchors).transform(
+            lambda x: (x + 1) ** (factor + factor_range * x / candles))
         volume = volume * multiplier
 
     # Calculate Result
     wp = typical_price * volume
-    vwap = wp.groupby(wp.index.to_period(anchor)).cumsum()
-    vwap /= volume.groupby(volume.index.to_period(anchor)).cumsum()
+    vwap = wp.groupby(anchors).cumsum()
+    vwap /= volume.groupby(anchors).cumsum()
 
     _props = f"_{anchor}"
     df = DataFrame({
