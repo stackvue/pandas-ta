@@ -23,6 +23,8 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, **kwargs):
     l_decay = kwargs.get("l_decay", decay) / 100
     intraday = kwargs.get("intraday", False)
 
+    u_offset = kwargs.get("u_offset", 0)
+    l_offset = kwargs.get("l_offset", 0)
 
     # Prepare DataFrame to return
     df = DataFrame({"close": close, "HLZ_HIGH": close, "HLZ_LOW": close, })
@@ -31,11 +33,13 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, **kwargs):
 
     anchor_group = df.groupby(df.index.to_period(anchor))
     upper_delta, lower_delta = prepare_boundary(close.iloc[0], mode, u_bound, l_bound)
+    upper_offset = lower_offset = 0
     broken_close = prev_close = close.iloc[0]
     add_zone = True
     for anchor_name, anchor_close in anchor_group:
         if intraday:
             # prev_date = close.first_valid_index().date()
+            upper_offset = lower_offset = 0
             upper_delta, lower_delta = prepare_boundary(anchor_close.iloc[0]["close"], mode, u_bound, l_bound)
             broken_close = prev_close = anchor_close.iloc[0]["close"]
         for index, row in anchor_close.iterrows():
@@ -55,6 +59,14 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, **kwargs):
                 df.loc[index, "HLZ_BREAK"] = value
                 df.loc[index, "HLZ_ZONE"] = value
                 upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
+                if value == 1:
+                    upper_offset = 0
+                    lower_offset += l_offset
+                    lower_delta -= lower_offset if mode == "abs" else row["close"] * lower_offset / 100
+                else:
+                    lower_offset = 0
+                    upper_offset += u_offset
+                    upper_delta -= upper_offset if mode == "abs" else row["close"] * upper_offset / 100
                 broken_close = row["close"]
             else:
                 df.loc[index, "HLZ_BREAK"] = 0
