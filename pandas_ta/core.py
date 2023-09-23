@@ -28,6 +28,7 @@ from pandas_ta.smart_trade import *
 
 df = pd.DataFrame()
 
+
 # Strategy DataClass
 @dataclass
 class Strategy:
@@ -266,7 +267,7 @@ class AnalysisIndicators(BasePandasObject):
     def __call__(
             self, kind: str = None,
             timed: bool = False, version: bool = False, **kwargs
-        ):
+    ):
         if version: print(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
         try:
             if isinstance(kind, str):
@@ -278,7 +279,7 @@ class AnalysisIndicators(BasePandasObject):
 
                 # Run the indicator
                 result = fn(**kwargs)  # = getattr(self, kind)(**kwargs)
-                self._last_run = get_time(self.exchange, to_string=True) # Save when it completed it's run
+                self._last_run = get_time(self.exchange, to_string=True)  # Save when it completed it's run
 
                 if timed:
                     result.timed = final_time(stime)
@@ -400,7 +401,8 @@ class AnalysisIndicators(BasePandasObject):
         """Appends a Pandas Series or DataFrame columns to self._df."""
         if "append" in kwargs and kwargs["append"]:
             df = self._df
-            if df is None or result is None: return
+            if df is None or result is None:
+                return
             else:
                 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
                 multi_index_prefix = kwargs.get("multi_index_prefix") or []
@@ -433,7 +435,7 @@ class AnalysisIndicators(BasePandasObject):
                 else:
                     ind_name = (
                         kwargs["col_names"][0] if "col_names" in kwargs and
-                        isinstance(kwargs["col_names"], tuple) else result.name)
+                                                  isinstance(kwargs["col_names"], tuple) else result.name)
                     col_name = tuple((multi_index_prefix or []) + [ind_name] + (multi_index_suffix or []))
                     col_name = col_name if len(col_name) > 1 else col_name[0]
                     df[col_name] = result
@@ -499,8 +501,8 @@ class AnalysisIndicators(BasePandasObject):
             # 'col_numbers':(0,1,3) for example)
             result = (result.iloc[:, [int(n) for n in kwargs["col_numbers"]]]
                       if isinstance(result, pd.DataFrame) and
-                      "col_numbers" in kwargs and
-                      kwargs["col_numbers"] is not None else result)
+                         "col_numbers" in kwargs and
+                         kwargs["col_numbers"] is not None else result)
             # Add prefix/suffix and append to the dataframe
             self._add_prefix_suffix(result=result, **kwargs)
             self._append(result=result, **kwargs)
@@ -622,7 +624,8 @@ class AnalysisIndicators(BasePandasObject):
         header = f"Pandas TA - Technical Analysis Indicators - v{self.version}"
         s = f"{header}\nTotal Indicators & Utilities: {total_indicators + len(ALL_PATTERNS)}\n"
         if total_indicators > 0:
-            print(f"{s}Abbreviations:\n    {', '.join(ta_indicators)}\n\nCandle Patterns:\n    {', '.join(ALL_PATTERNS)}")
+            print(
+                f"{s}Abbreviations:\n    {', '.join(ta_indicators)}\n\nCandle Patterns:\n    {', '.join(ALL_PATTERNS)}")
         else:
             print(s)
 
@@ -670,7 +673,7 @@ class AnalysisIndicators(BasePandasObject):
             # "data", # reserved
             "long_run",
             "short_run",
-            "td_seq", # Performance exclusion
+            "td_seq",  # Performance exclusion
             "tsignals",
             "vp",
             "xsignals",
@@ -742,7 +745,8 @@ class AnalysisIndicators(BasePandasObject):
                 # Some magic to optimize chunksize for speed based on total ta indicators
                 _chunksize = mp_chunksize - 1 if mp_chunksize > _total_ta else int(npLog10(_total_ta)) + 1
                 if verbose:
-                    print(f"[i] Multiprocessing {_total_ta} indicators with {_chunksize} chunks and {self.cores}/{cpu_count()} cpus.")
+                    print(
+                        f"[i] Multiprocessing {_total_ta} indicators with {_chunksize} chunks and {self.cores}/{cpu_count()} cpus.")
 
                 results = None
                 if mode["custom"]:
@@ -760,14 +764,15 @@ class AnalysisIndicators(BasePandasObject):
                     # All and Categorical multiprocessing pool.
                     if all_ordered:
                         if Imports["tqdm"]:
-                            results = tqdm(pool.imap(self._mp_worker, default_ta, _chunksize)) # Order over Speed
+                            results = tqdm(pool.imap(self._mp_worker, default_ta, _chunksize))  # Order over Speed
                         else:
-                            results = pool.imap(self._mp_worker, default_ta, _chunksize) # Order over Speed
+                            results = pool.imap(self._mp_worker, default_ta, _chunksize)  # Order over Speed
                     else:
                         if Imports["tqdm"]:
-                            results = tqdm(pool.imap_unordered(self._mp_worker, default_ta, _chunksize)) # Speed over Order
+                            results = tqdm(
+                                pool.imap_unordered(self._mp_worker, default_ta, _chunksize))  # Speed over Order
                         else:
-                            results = pool.imap_unordered(self._mp_worker, default_ta, _chunksize) # Speed over Order
+                            results = pool.imap_unordered(self._mp_worker, default_ta, _chunksize)  # Speed over Order
                 if results is None:
                     print(f"[X] ta.strategy('{name}') has no results.")
                     return
@@ -815,7 +820,6 @@ class AnalysisIndicators(BasePandasObject):
             print(f"[i] Runtime: {final_time(stime)}")
 
         if returns: return self._df
-
 
     def ticker(self, ticker: str, **kwargs):
         """ticker
@@ -866,7 +870,8 @@ class AnalysisIndicators(BasePandasObject):
         # df = av(ticker, **kwargs) if ds and ds == "av" else yf(ticker, **kwargs)
         df = yf(ticker, **kwargs)
 
-        if df is None: return
+        if df is None:
+            return
         elif df.empty:
             print(f"[X] DataFrame is empty: {df.shape}")
             return
@@ -878,7 +883,6 @@ class AnalysisIndicators(BasePandasObject):
 
         if strategy is not None: self.strategy(strategy, **kwargs)
         return df
-
 
     # Public DataFrame Methods: Indicators and Utilities
     # Candles
@@ -943,7 +947,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = brar(open_=open_, high=high, low=low, close=close, length=length, scalar=scalar, drift=drift, offset=offset, **kwargs)
+        result = brar(open_=open_, high=high, low=low, close=close, length=length, scalar=scalar, drift=drift,
+                      offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def cci(self, length=None, c=None, offset=None, **kwargs):
@@ -1002,14 +1007,17 @@ class AnalysisIndicators(BasePandasObject):
         result = fisher(high=high, low=low, length=length, signal=signal, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def inertia(self, length=None, rvi_length=None, scalar=None, refined=None, thirds=None, mamode=None, drift=None, offset=None, **kwargs):
+    def inertia(self, length=None, rvi_length=None, scalar=None, refined=None, thirds=None, mamode=None, drift=None,
+                offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         if refined is not None or thirds is not None:
             high = self._get_column(kwargs.pop("high", "high"))
             low = self._get_column(kwargs.pop("low", "low"))
-            result = inertia(close=close, high=high, low=low, length=length, rvi_length=rvi_length, scalar=scalar, refined=refined, thirds=thirds, mamode=mamode, drift=drift, offset=offset, **kwargs)
+            result = inertia(close=close, high=high, low=low, length=length, rvi_length=rvi_length, scalar=scalar,
+                             refined=refined, thirds=thirds, mamode=mamode, drift=drift, offset=offset, **kwargs)
         else:
-            result = inertia(close=close, length=length, rvi_length=rvi_length, scalar=scalar, refined=refined, thirds=thirds, mamode=mamode, drift=drift, offset=offset, **kwargs)
+            result = inertia(close=close, length=length, rvi_length=rvi_length, scalar=scalar, refined=refined,
+                             thirds=thirds, mamode=mamode, drift=drift, offset=offset, **kwargs)
 
         return self._post_process(result, **kwargs)
 
@@ -1020,9 +1028,11 @@ class AnalysisIndicators(BasePandasObject):
         result = kdj(high=high, low=low, close=close, length=length, signal=signal, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def kst(self, roc1=None, roc2=None, roc3=None, roc4=None, sma1=None, sma2=None, sma3=None, sma4=None, signal=None, offset=None, **kwargs):
+    def kst(self, roc1=None, roc2=None, roc3=None, roc4=None, sma1=None, sma2=None, sma3=None, sma4=None, signal=None,
+            offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
-        result = kst(close=close, roc1=roc1, roc2=roc2, roc3=roc3, roc4=roc4, sma1=sma1, sma2=sma2, sma3=sma3, sma4=sma4, signal=signal, offset=offset, **kwargs)
+        result = kst(close=close, roc1=roc1, roc2=roc2, roc3=roc3, roc4=roc4, sma1=sma1, sma2=sma2, sma3=sma3,
+                     sma4=sma4, signal=signal, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def macd(self, fast=None, slow=None, signal=None, offset=None, **kwargs):
@@ -1085,7 +1095,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = rvgi(open_=open_, high=high, low=low, close=close, length=length, swma_length=swma_length, offset=offset, **kwargs)
+        result = rvgi(open_=open_, high=high, low=low, close=close, length=length, swma_length=swma_length,
+                      offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def slope(self, length=None, offset=None, **kwargs):
@@ -1098,37 +1109,49 @@ class AnalysisIndicators(BasePandasObject):
         result = smi(close=close, fast=fast, slow=slow, signal=signal, scalar=scalar, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def squeeze(self, bb_length=None, bb_std=None, kc_length=None, kc_scalar=None, mom_length=None, mom_smooth=None, use_tr=None, mamode=None, offset=None, **kwargs):
+    def squeeze(self, bb_length=None, bb_std=None, kc_length=None, kc_scalar=None, mom_length=None, mom_smooth=None,
+                use_tr=None, mamode=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = squeeze(high=high, low=low, close=close, bb_length=bb_length, bb_std=bb_std, kc_length=kc_length, kc_scalar=kc_scalar, mom_length=mom_length, mom_smooth=mom_smooth, use_tr=use_tr, mamode=mamode, offset=offset, **kwargs)
+        result = squeeze(high=high, low=low, close=close, bb_length=bb_length, bb_std=bb_std, kc_length=kc_length,
+                         kc_scalar=kc_scalar, mom_length=mom_length, mom_smooth=mom_smooth, use_tr=use_tr,
+                         mamode=mamode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def squeeze_pro(self, bb_length=None, bb_std=None, kc_length=None, kc_scalar_wide=None, kc_scalar_normal=None, kc_scalar_narrow=None, mom_length=None, mom_smooth=None, use_tr=None, mamode=None, offset=None, **kwargs):
+    def squeeze_pro(self, bb_length=None, bb_std=None, kc_length=None, kc_scalar_wide=None, kc_scalar_normal=None,
+                    kc_scalar_narrow=None, mom_length=None, mom_smooth=None, use_tr=None, mamode=None, offset=None,
+                    **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = squeeze_pro(high=high, low=low, close=close, bb_length=bb_length, bb_std=bb_std, kc_length=kc_length, kc_scalar_wide=kc_scalar_wide, kc_scalar_normal=kc_scalar_normal, kc_scalar_narrow=kc_scalar_narrow, mom_length=mom_length, mom_smooth=mom_smooth, use_tr=use_tr, mamode=mamode, offset=offset, **kwargs)
+        result = squeeze_pro(high=high, low=low, close=close, bb_length=bb_length, bb_std=bb_std, kc_length=kc_length,
+                             kc_scalar_wide=kc_scalar_wide, kc_scalar_normal=kc_scalar_normal,
+                             kc_scalar_narrow=kc_scalar_narrow, mom_length=mom_length, mom_smooth=mom_smooth,
+                             use_tr=use_tr, mamode=mamode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def stc(self, ma1=None, ma2=None, osc=None, tclength=None, fast=None, slow=None, factor=None, offset=None, **kwargs):
+    def stc(self, ma1=None, ma2=None, osc=None, tclength=None, fast=None, slow=None, factor=None, offset=None,
+            **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
-        result = stc(close=close, ma1=ma1, ma2=ma2, osc=osc, tclength=tclength, fast=fast, slow=slow, factor=factor, offset=offset, **kwargs)
+        result = stc(close=close, ma1=ma1, ma2=ma2, osc=osc, tclength=tclength, fast=fast, slow=slow, factor=factor,
+                     offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def stoch(self, fast_k=None, slow_k=None, slow_d=None, mamode=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = stoch(high=high, low=low, close=close, fast_k=fast_k, slow_k=slow_k, slow_d=slow_d, mamode=mamode, offset=offset, **kwargs)
+        result = stoch(high=high, low=low, close=close, fast_k=fast_k, slow_k=slow_k, slow_d=slow_d, mamode=mamode,
+                       offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def stochrsi(self, length=None, rsi_length=None, k=None, d=None, mamode=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = stochrsi(high=high, low=low, close=close, length=length, rsi_length=rsi_length, k=k, d=d, mamode=mamode, offset=offset, **kwargs)
+        result = stochrsi(high=high, low=low, close=close, length=length, rsi_length=rsi_length, k=k, d=d,
+                          mamode=mamode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def td_seq(self, asint=None, offset=None, show_all=None, **kwargs):
@@ -1146,11 +1169,13 @@ class AnalysisIndicators(BasePandasObject):
         result = tsi(close=close, fast=fast, slow=slow, drift=drift, mamode=mamode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def uo(self, fast=None, medium=None, slow=None, fast_w=None, medium_w=None, slow_w=None, drift=None, offset=None, **kwargs):
+    def uo(self, fast=None, medium=None, slow=None, fast_w=None, medium_w=None, slow_w=None, drift=None, offset=None,
+           **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = uo(high=high, low=low, close=close, fast=fast, medium=medium, slow=slow, fast_w=fast_w, medium_w=medium_w, slow_w=slow_w, drift=drift, offset=offset, **kwargs)
+        result = uo(high=high, low=low, close=close, fast=fast, medium=medium, slow=slow, fast_w=fast_w,
+                    medium_w=medium_w, slow_w=slow_w, drift=drift, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def willr(self, length=None, percentage=True, offset=None, **kwargs):
@@ -1163,7 +1188,8 @@ class AnalysisIndicators(BasePandasObject):
     # Overlap
     def alma(self, length=None, sigma=None, distribution_offset=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
-        result = alma(close=close, length=length, sigma=sigma, distribution_offset=distribution_offset, offset=offset, **kwargs)
+        result = alma(close=close, length=length, sigma=sigma, distribution_offset=distribution_offset, offset=offset,
+                      **kwargs)
         return self._post_process(result, **kwargs)
 
     def dema(self, length=None, offset=None, **kwargs):
@@ -1185,7 +1211,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = hilo(high=high, low=low, close=close, high_length=high_length, low_length=low_length, mamode=mamode, offset=offset, **kwargs)
+        result = hilo(high=high, low=low, close=close, high_length=high_length, low_length=low_length, mamode=mamode,
+                      offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def hilo_band(self, offset=None, **kwargs):
@@ -1241,6 +1268,13 @@ class AnalysisIndicators(BasePandasObject):
         result = smz(high=high, low=low, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def sp(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        result = sp(close=close, high=high, low=low, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def smv(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = smv(close=close, length=length, offset=offset, **kwargs)
@@ -1271,7 +1305,7 @@ class AnalysisIndicators(BasePandasObject):
         column = self._get_column(col_name)
         result = caggr(column=column, group_by=group_by, group_on=group_on, agg_types=agg_types, **kwargs)
         return self._post_process(result, **kwargs)
-    
+
     def hl2(self, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
@@ -1309,7 +1343,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result, span = ichimoku(high=high, low=low, close=close, tenkan=tenkan, kijun=kijun, senkou=senkou, include_chikou=include_chikou, offset=offset, **kwargs)
+        result, span = ichimoku(high=high, low=low, close=close, tenkan=tenkan, kijun=kijun, senkou=senkou,
+                                include_chikou=include_chikou, offset=offset, **kwargs)
         self._add_prefix_suffix(result, **kwargs)
         self._add_prefix_suffix(span, **kwargs)
         self._append(result, **kwargs)
@@ -1374,7 +1409,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = supertrend(high=high, low=low, close=close, length=length, multiplier=multiplier, offset=offset, **kwargs)
+        result = supertrend(high=high, low=low, close=close, length=length, multiplier=multiplier, offset=offset,
+                            **kwargs)
         return self._post_process(result, **kwargs)
 
     def swma(self, length=None, offset=None, **kwargs):
@@ -1448,7 +1484,8 @@ class AnalysisIndicators(BasePandasObject):
 
     def percent_return(self, length=None, cumulative=False, percent=False, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
-        result = percent_return(close=close, length=length, cumulative=cumulative, percent=percent, offset=offset, **kwargs)
+        result = percent_return(close=close, length=length, cumulative=cumulative, percent=percent, offset=offset,
+                                **kwargs)
         return self._post_process(result, **kwargs)
 
     def trend_return(self, trend=None, log=True, cumulative=None, offset=None, trend_reset=None, **kwargs):
@@ -1457,7 +1494,8 @@ class AnalysisIndicators(BasePandasObject):
         else:
             close = self._get_column(kwargs.pop("close", "close"))
             trend = self._get_column(trend)
-            result = trend_return(close=close, trend=trend, log=log, cumulative=cumulative, offset=offset, trend_reset=trend_reset, **kwargs)
+            result = trend_return(close=close, trend=trend, log=log, cumulative=cumulative, offset=offset,
+                                  trend_reset=trend_reset, **kwargs)
             return self._post_process(result, **kwargs)
 
     # Statistics
@@ -1516,7 +1554,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = adx(high=high, low=low, close=close, length=length, lensig=lensig, mamode=mamode, scalar=scalar, drift=drift, offset=offset, **kwargs)
+        result = adx(high=high, low=low, close=close, length=length, lensig=lensig, mamode=mamode, scalar=scalar,
+                     drift=drift, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def amat(self, fast=None, slow=None, mamode=None, lookback=None, offset=None, **kwargs):
@@ -1534,7 +1573,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = chop(high=high, low=low, close=close, length=length, atr_length=atr_length, scalar=scalar, drift=drift, offset=offset, **kwargs)
+        result = chop(high=high, low=low, close=close, length=length, atr_length=atr_length, scalar=scalar, drift=drift,
+                      offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def cksp(self, p=None, x=None, q=None, mamode=None, offset=None, **kwargs):
@@ -1606,7 +1646,8 @@ class AnalysisIndicators(BasePandasObject):
         if trend is None:
             return self._df
         else:
-            result = tsignals(trend, asbool=asbool, trend_offset=trend_offset, trend_reset=trend_reset, offset=offset, **kwargs)
+            result = tsignals(trend, asbool=asbool, trend_offset=trend_offset, trend_reset=trend_reset, offset=offset,
+                              **kwargs)
             return self._post_process(result, **kwargs)
 
     def ttm_trend(self, length=None, offset=None, **kwargs):
@@ -1628,11 +1669,13 @@ class AnalysisIndicators(BasePandasObject):
         result = vortex(high=high, low=low, close=close, drift=drift, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def xsignals(self, signal=None, xa=None, xb=None, above=None, long=None, asbool=None, trend_reset=None, trend_offset=None, offset=None, **kwargs):
+    def xsignals(self, signal=None, xa=None, xb=None, above=None, long=None, asbool=None, trend_reset=None,
+                 trend_offset=None, offset=None, **kwargs):
         if signal is None:
             return self._df
         else:
-            result = xsignals(signal=signal, xa=xa, xb=xb, above=above, long=long, asbool=asbool, trend_offset=trend_offset, trend_reset=trend_reset, offset=offset, **kwargs)
+            result = xsignals(signal=signal, xa=xa, xb=xb, above=above, long=long, asbool=asbool,
+                              trend_offset=trend_offset, trend_reset=trend_reset, offset=offset, **kwargs)
             return self._post_process(result, **kwargs)
 
     # Utility
@@ -1675,7 +1718,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = aberration(high=high, low=low, close=close, length=length, atr_length=atr_length, offset=offset, **kwargs)
+        result = aberration(high=high, low=low, close=close, length=length, atr_length=atr_length, offset=offset,
+                            **kwargs)
         return self._post_process(result, **kwargs)
 
     def accbands(self, length=None, c=None, mamode=None, offset=None, **kwargs):
@@ -1693,14 +1737,15 @@ class AnalysisIndicators(BasePandasObject):
         return self._post_process(result, **kwargs)
 
     def bbands(self, length=None, std=None, mamode=None, offset=None, **kwargs):
-        close  = self._get_column(kwargs.pop("close", "close"))
+        close = self._get_column(kwargs.pop("close", "close"))
         result = bbands(close=close, length=length, std=std, mamode=mamode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def donchian(self, lower_length=None, upper_length=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
-        result = donchian(high=high, low=low, lower_length=lower_length, upper_length=upper_length, offset=offset, **kwargs)
+        result = donchian(high=high, low=low, lower_length=lower_length, upper_length=upper_length, offset=offset,
+                          **kwargs)
         return self._post_process(result, **kwargs)
 
     def hwc(self, na=None, nb=None, nc=None, nd=None, scalar=None, offset=None, **kwargs):
@@ -1712,7 +1757,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = kc(high=high, low=low, close=close, length=length, scalar=scalar, mamode=mamode, offset=offset, **kwargs)
+        result = kc(high=high, low=low, close=close, length=length, scalar=scalar, mamode=mamode, offset=offset,
+                    **kwargs)
         return self._post_process(result, **kwargs)
 
     def massi(self, fast=None, slow=None, offset=None, **kwargs):
@@ -1725,7 +1771,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = natr(high=high, low=low, close=close, length=length, mamode=mamode, scalar=scalar, offset=offset, **kwargs)
+        result = natr(high=high, low=low, close=close, length=length, mamode=mamode, scalar=scalar, offset=offset,
+                      **kwargs)
         return self._post_process(result, **kwargs)
 
     def pdist(self, drift=None, offset=None, **kwargs):
@@ -1740,13 +1787,15 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = rvi(high=high, low=low, close=close, length=length, scalar=scalar, refined=refined, thirds=thirds, mamode=mamode, drift=drift, offset=offset, **kwargs)
+        result = rvi(high=high, low=low, close=close, length=length, scalar=scalar, refined=refined, thirds=thirds,
+                     mamode=mamode, drift=drift, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def thermo(self, long=None, short= None, length=None, mamode=None, drift=None, offset=None, **kwargs):
+    def thermo(self, long=None, short=None, length=None, mamode=None, drift=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
-        result = thermo(high=high, low=low, long=long, short=short, length=length, mamode=mamode, drift=drift, offset=offset, **kwargs)
+        result = thermo(high=high, low=low, long=long, short=short, length=length, mamode=mamode, drift=drift,
+                        offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def true_range(self, drift=None, offset=None, **kwargs):
@@ -1779,13 +1828,15 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
-        result = adosc(high=high, low=low, close=close, volume=volume, open_=open_, fast=fast, slow=slow, signed=signed, offset=offset, **kwargs)
+        result = adosc(high=high, low=low, close=close, volume=volume, open_=open_, fast=fast, slow=slow, signed=signed,
+                       offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def aobv(self, fast=None, slow=None, mamode=None, max_lookback=None, min_lookback=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
-        result = aobv(close=close, volume=volume, fast=fast, slow=slow, mamode=mamode, max_lookback=max_lookback, min_lookback=min_lookback, offset=offset, **kwargs)
+        result = aobv(close=close, volume=volume, fast=fast, slow=slow, mamode=mamode, max_lookback=max_lookback,
+                      min_lookback=min_lookback, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def cmf(self, open_=None, length=None, offset=None, **kwargs):
@@ -1795,7 +1846,8 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
-        result = cmf(high=high, low=low, close=close, volume=volume, open_=open_, length=length, offset=offset, **kwargs)
+        result = cmf(high=high, low=low, close=close, volume=volume, open_=open_, length=length, offset=offset,
+                     **kwargs)
         return self._post_process(result, **kwargs)
 
     def efi(self, length=None, mamode=None, offset=None, drift=None, **kwargs):
@@ -1809,7 +1861,8 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
-        result = eom(high=high, low=low, close=close, volume=volume, length=length, divisor=divisor, offset=offset, drift=drift, **kwargs)
+        result = eom(high=high, low=low, close=close, volume=volume, length=length, divisor=divisor, offset=offset,
+                     drift=drift, **kwargs)
         return self._post_process(result, **kwargs)
 
     def kvo(self, fast=None, slow=None, length_sig=None, mamode=None, offset=None, drift=None, **kwargs):
@@ -1817,7 +1870,8 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
-        result = kvo(high=high, low=low, close=close, volume=volume, fast=fast, slow=slow, length_sig=length_sig, mamode=mamode, offset=offset, drift=drift, **kwargs)
+        result = kvo(high=high, low=low, close=close, volume=volume, fast=fast, slow=slow, length_sig=length_sig,
+                     mamode=mamode, offset=offset, drift=drift, **kwargs)
         return self._post_process(result, **kwargs)
 
     def mfi(self, length=None, drift=None, offset=None, **kwargs):
@@ -1825,7 +1879,8 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
-        result = mfi(high=high, low=low, close=close, volume=volume, length=length, drift=drift, offset=offset, **kwargs)
+        result = mfi(high=high, low=low, close=close, volume=volume, length=length, drift=drift, offset=offset,
+                     **kwargs)
         return self._post_process(result, **kwargs)
 
     def nvi(self, length=None, initial=None, signed=True, offset=None, **kwargs):
@@ -1876,5 +1931,3 @@ class AnalysisIndicators(BasePandasObject):
         b = self._get_column(kwargs.pop("b", "b"))
         result = expr(series_a=a, series_b=b, expression=expression, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
-
-
