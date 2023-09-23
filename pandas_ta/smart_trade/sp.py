@@ -14,25 +14,25 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     length = int(length) if length and length > 0 else 1
     min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else 2*length+1
     offset = get_offset(offset)
-    group_by = kwargs.get("anchor")
+    ask = kwargs.get("ask", 0) or length
     # Calculate Result
-    if group_by:
-        grouper = pd.Grouper(freq=group_by)
-        p_mins = close.groupby(grouper).transform(lambda s: s.rolling(2*length+1, min_periods=min_periods, center=True).min())
-        p_maxs = close.groupby(grouper).transform(lambda s: s.rolling(2*length+1, min_periods=min_periods, center=True).max())
-        s_mins = low.groupby(grouper).transform(lambda s: s.rolling(2*length+1, min_periods=min_periods, center=True).min())
-        s_maxs = high.groupby(grouper).transform(lambda s: s.rolling(2*length+1, min_periods=min_periods, center=True).max())
-    else:
-        p_mins = close.rolling(2*length+1, min_periods=min_periods, center=True).min()
-        p_maxs = close.rolling(2*length+1, min_periods=min_periods, center=True).max()
-        s_mins = low.rolling(2*length+1, min_periods=min_periods, center=True).min()
-        s_maxs = high.rolling(2*length+1, min_periods=min_periods, center=True).max()
-    l_pivot = (close == p_mins) & (low == s_mins)
-    h_pivot = (close == p_maxs) & (high == s_maxs)
+
+    high_before = close - close
+    high_after = close - close
+    low_before = close - close
+    low_after = close - close
+    for i in range(1,length+1):
+        minus_i = -1 * i
+        high_before += ((close > close.shift(i)) & (high > high.shift(i))).astype(int)
+        high_after += ((close > close.shift(minus_i)) & (high > high.shift(minus_i))).astype(int)
+        low_before += ((close < close.shift(i)) & (low < low.shift(i))).astype(int)
+        low_after += ((close < close.shift(minus_i)) & (low < low.shift(minus_i))).astype(int)
+
+    h_pivot = (high_before >= ask) & (high_after >= ask)
+    l_pivot = (low_before >= ask) & (low_after >= ask)
     sph = close.where(h_pivot).shift(length).fillna(method='ffill')
     spl = close.where(l_pivot).shift(length).fillna(method='ffill')
     spp = (-1*l_pivot.astype(int) + h_pivot.astype(int)).shift(length)
-
 
     # Offset
     if offset != 0:
