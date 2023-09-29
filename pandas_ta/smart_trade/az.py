@@ -40,14 +40,14 @@ def az(close, u_bound, l_bound, mode=None, offset=None, **kwargs):
             df.loc[index, "AZ_LOW"] = broken_close - lower_delta
             df.loc[index, "AZ_BREAK"] = value
             df.loc[index, "AZ_ZONE"] = value
-        elif value == 0 and row["close"] != prev_close:
-            value = 1 if row["close"] > prev_close else -1
-            broken_close = row["close"]
-            df.loc[index, "AZ_HIGH"] = broken_close + upper_delta
-            df.loc[index, "AZ_LOW"] = broken_close - lower_delta
-            df.loc[index, "AZ_BREAK"] = value
-            df.loc[index, "AZ_ZONE"] = value
-            upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
+        # elif value == 0 and row["close"] != prev_close:
+        #     value = 1 if row["close"] > prev_close else -1
+        #     broken_close = row["close"]
+        #     df.loc[index, "AZ_HIGH"] = broken_close + upper_delta
+        #     df.loc[index, "AZ_LOW"] = broken_close - lower_delta
+        #     df.loc[index, "AZ_BREAK"] = value
+        #     df.loc[index, "AZ_ZONE"] = value
+        #     upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
         else:
             if mode == "abs":
                 upper_delta += u_delta * value
