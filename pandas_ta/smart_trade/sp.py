@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pandas as pd
 from pandas import DataFrame
 
 from pandas_ta.utils import get_offset, verify_series
@@ -12,27 +11,46 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     high = verify_series(high)
     low = verify_series(low)
     length = int(length) if length and length > 0 else 1
-    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else 2*length+1
+    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs[
+        "min_periods"] is not None else 2 * length + 1
     offset = get_offset(offset)
     ask = kwargs.get("ask", 0) or length
     # Calculate Result
 
-    high_before = close - close
-    high_after = close - close
-    low_before = close - close
-    low_after = close - close
-    for i in range(1,length+1):
+    df = DataFrame({"close": close, "high": high, "low": low, })
+    df["low_after"] = df["low_before"] = df["high_after"] = df["high_before"] = 0
+    for i in range(1, length + 1):
         minus_i = -1 * i
-        high_before += ((close > close.shift(i)) & (high > high.shift(i))).astype(int)
-        high_after += ((close > close.shift(minus_i)) & (high > high.shift(minus_i))).astype(int)
-        low_before += ((close < close.shift(i)) & (low < low.shift(i))).astype(int)
-        low_after += ((close < close.shift(minus_i)) & (low < low.shift(minus_i))).astype(int)
+        df["high_before"] += ((df["close"] > df["close"].shift(i)) & (df["high"] > df["high"].shift(i))).astype(int)
+        df["high_after"] += (
+                (df["close"] > df["close"].shift(minus_i)) & (df["high"] > df["high"].shift(minus_i))).astype(int)
+        df["low_before"] += ((df["close"] < df["close"].shift(i)) & (df["low"] < df["low"].shift(i))).astype(int)
+        df["low_after"] += ((df["close"] < df["close"].shift(minus_i)) & (df["low"] < df["low"].shift(minus_i))).astype(
+            int)
 
-    h_pivot = (high_before >= ask) & (high_after >= ask)
-    l_pivot = (low_before >= ask) & (low_after >= ask)
-    sph = close.where(h_pivot).shift(length).fillna(method='ffill')
-    spl = close.where(l_pivot).shift(length).fillna(method='ffill')
-    spp = (-1*l_pivot.astype(int) + h_pivot.astype(int)).shift(length)
+    df["h_pivot"] = (df["high_before"] >= ask) & (df["high_after"] >= ask)
+    df["l_pivot"] = (df["low_before"] >= ask) & (df["low_after"] >= ask)
+    df["sph"] = df["close"].where(df["h_pivot"]).fillna(method='ffill').shift(length)
+    df["spl"] = df["close"].where(df["l_pivot"]).fillna(method='ffill').shift(length)
+    df["lpb"] = df["close"] < df["spl"]
+    df["hpb"] = df["close"] > df["sph"]
+
+    df["lpb"] = df["lpb"] & (~df["lpb"]).shift(1)
+    df["hpb"] = df["hpb"] & (~df["hpb"]).shift(1)
+
+    df["lprs"] = (df["lpb"].astype(int) * -1).cumsum()  # .where(df["lpb"])
+    df["hprs"] = (df["hpb"].astype(int)).cumsum()  # .where(df["hpb"])
+
+    df["lpr"] = df.groupby("hprs")["lprs"].transform("cummin").where(df["lpb"])
+    df["hpr"] = df.groupby("lprs")["hprs"].transform("cummin").where(df["hpb"])
+
+    df["z"] = df["lpr"].fillna(df["hpr"]).fillna(method="ffill")
+
+    grouped = df.groupby("z")
+    sph = grouped["sph"].transform("cummax").where(df["z"] < 0)
+    spl = grouped["spl"].transform("cummin").where(df["z"] > 0)
+
+    spp = df["z"].apply(lambda row: (row / abs(row)) if row else 0)
 
     # Offset
     if offset != 0:
@@ -59,44 +77,43 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     spp.category = "smart-trade"
 
     df = DataFrame({
-            f"SPH_{length}": sph,
-            f"SPL_{length}": spl,
-            f"SPP_{length}": spp,
-        }, index=close.index)
+        f"SPH_{length}": sph,
+        f"SPL_{length}": spl,
+        f"SPP_{length}": spp,
+    }, index=close.index)
 
     df.name = f"SP{length}"
     df.category = "smart-trade"
-
 
     return df
 
 
 sp.__doc__ = \
-"""Smart Pivot (SP)
-
-The Smart Pivot is the Short term Pivots over n periods.
-
-Sources:
-    https://smart-trade.reluminos.com
-
-Calculation:
-    Default Inputs:
-        length=10
-    SMH = Short Term High Pivot
-    SML = Short Term Low Pivot
-    SMP = Pivot Direction
-
-Args:
-    close (pd.Series): Series of 'close's
-    high (pd.Series): Series of 'high's
-    low (pd.Series): Series of 'low's
-    length (int): It's period. Default: 10
-    offset (int): How many periods to offset the result. Default: 0
-
-Kwargs:
-    fillna (value, optional): pd.DataFrame.fillna(value)
-    fill_method (value, optional): Type of fill method
-
-Returns:
-    pd.DataFrame: SPH (highpivot), SPL (lowpivot), SPP (pivotdirection).
-"""
+    """Smart Pivot (SP)
+    
+    The Smart Pivot is the Short term Pivots over n periods.
+    
+    Sources:
+        https://smart-trade.reluminos.com
+    
+    Calculation:
+        Default Inputs:
+            length=10
+        SMH = Short Term High Pivot
+        SML = Short Term Low Pivot
+        SMP = Pivot Direction
+    
+    Args:
+        close (pd.Series): Series of 'close's
+        high (pd.Series): Series of 'high's
+        low (pd.Series): Series of 'low's
+        length (int): It's period. Default: 10
+        offset (int): How many periods to offset the result. Default: 0
+    
+    Kwargs:
+        fillna (value, optional): pd.DataFrame.fillna(value)
+        fill_method (value, optional): Type of fill method
+    
+    Returns:
+        pd.DataFrame: SPH (highpivot), SPL (lowpivot), SPP (pivotdirection).
+    """
