@@ -47,8 +47,8 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     df["z"] = df["lpr"].fillna(df["hpr"]).fillna(method="ffill")
 
     grouped = df.groupby("z")
-    sph = grouped["sph"].transform("cummax").where(df["z"] < 0)
-    spl = grouped["spl"].transform("cummin").where(df["z"] > 0)
+    sph = grouped["sph"].transform("cummax").where(df["z"] < 0).fillna(df["sph"])
+    spl = grouped["spl"].transform("cummin").where(df["z"] > 0).fillna(df["spl"])
 
     spp = df["z"].apply(lambda row: (row / abs(row)) if row else 0)
 
