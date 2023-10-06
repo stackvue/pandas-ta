@@ -47,8 +47,11 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     df["z"] = df["lpr"].fillna(df["hpr"]).fillna(method="ffill")
 
     grouped = df.groupby("z")
-    sph = grouped["sph"].transform("cummax").where(df["z"] < 0).fillna(df["sph"])
-    spl = grouped["spl"].transform("cummin").where(df["z"] > 0).fillna(df["spl"])
+    lph = grouped["sph"].transform("cummax").where(df["z"] < 0)#.fillna(df["sph"])
+    lpl = grouped["spl"].transform("cummin").where(df["z"] > 0)#.fillna(df["spl"])
+
+    sph = df["sph"].fillna(method="ffill")
+    spl = df["spl"].fillna(method="ffill")
 
     spp = df["z"].apply(lambda row: (row / abs(row)) if row else 0)
     spd = (df["lpb"].astype(int) * -1) + (df["hpb"].astype(int))
@@ -59,6 +62,8 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
         spl = spl.shift(offset)
         spp = spp.shift(offset)
         spd = spd.shift(offset)
+        lph = sph.shift(offset)
+        lpl = spl.shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:
@@ -66,11 +71,15 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
         spl.fillna(kwargs["fillna"], inplace=True)
         spp.fillna(kwargs["fillna"], inplace=True)
         spd.fillna(kwargs["fillna"], inplace=True)
+        lph.fillna(kwargs["fillna"], inplace=True)
+        lpl.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
         sph.fillna(method=kwargs["fill_method"], inplace=True)
         spl.fillna(method=kwargs["fill_method"], inplace=True)
         spp.fillna(method=kwargs["fill_method"], inplace=True)
         spd.fillna(method=kwargs["fill_method"], inplace=True)
+        lph.fillna(method=kwargs["fill_method"], inplace=True)
+        lpl.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     sph.name = f"SPH_{length}"
@@ -81,12 +90,18 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     spp.category = "smart-trade"
     spd.name = f"SPD_{length}"
     spd.category = "smart-trade"
+    lph.name = f"LPH_{length}"
+    lph.category = "smart-trade"
+    lpl.name = f"LPL_{length}"
+    lpl.category = "smart-trade"
 
     df = DataFrame({
         f"SPH_{length}": sph,
         f"SPL_{length}": spl,
         f"SPP_{length}": spp,
         f"SPD_{length}": spd,
+        f"LPH_{length}": lph,
+        f"LPL_{length}": lpl,
     }, index=close.index)
 
     df.name = f"SP{length}"
