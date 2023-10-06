@@ -44,11 +44,12 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     df["lpr"] = df.groupby("hprs")["lprs"].transform("cummin").where(df["lpb"])
     df["hpr"] = df.groupby("lprs")["hprs"].transform("cummin").where(df["hpb"])
 
-    df["z"] = df["lpr"].fillna(df["hpr"]).fillna(method="ffill")
+    df["z"] = df["lpr"].fillna(df["hpr"]).fillna(method="ffill").apply(lambda row: (row / abs(row)) if row else 0)
+    df["z"] = (df["z"] != df["z"].shift()).astype(int).cumsum() * df["z"]
 
     grouped = df.groupby("z")
-    lph = grouped["sph"].transform("cummax").where(df["z"] < 0)#.fillna(df["sph"])
-    lpl = grouped["spl"].transform("cummin").where(df["z"] > 0)#.fillna(df["spl"])
+    lph = grouped["sph"].transform("cummax").where(df["z"] < 0)  # .fillna(df["sph"])
+    lpl = grouped["spl"].transform("cummin").where(df["z"] > 0)  # .fillna(df["spl"])
 
     sph = df["sph"].fillna(method="ffill")
     spl = df["spl"].fillna(method="ffill")
