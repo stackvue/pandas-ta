@@ -51,22 +51,26 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     spl = grouped["spl"].transform("cummin").where(df["z"] > 0).fillna(df["spl"])
 
     spp = df["z"].apply(lambda row: (row / abs(row)) if row else 0)
+    spd = (df["lpb"].astype(int) * -1) + (df["hpb"].astype(int))
 
     # Offset
     if offset != 0:
         sph = sph.shift(offset)
         spl = spl.shift(offset)
         spp = spp.shift(offset)
+        spd = spd.shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:
         sph.fillna(kwargs["fillna"], inplace=True)
         spl.fillna(kwargs["fillna"], inplace=True)
         spp.fillna(kwargs["fillna"], inplace=True)
+        spd.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
         sph.fillna(method=kwargs["fill_method"], inplace=True)
         spl.fillna(method=kwargs["fill_method"], inplace=True)
         spp.fillna(method=kwargs["fill_method"], inplace=True)
+        spd.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     sph.name = f"SPH_{length}"
@@ -75,11 +79,14 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     spl.category = "smart-trade"
     spp.name = f"SPP_{length}"
     spp.category = "smart-trade"
+    spd.name = f"SPD_{length}"
+    spd.category = "smart-trade"
 
     df = DataFrame({
         f"SPH_{length}": sph,
         f"SPL_{length}": spl,
         f"SPP_{length}": spp,
+        f"SPD_{length}": spd,
     }, index=close.index)
 
     df.name = f"SP{length}"
@@ -115,5 +122,5 @@ sp.__doc__ = \
         fill_method (value, optional): Type of fill method
     
     Returns:
-        pd.DataFrame: SPH (highpivot), SPL (lowpivot), SPP (pivotdirection).
+        pd.DataFrame: SPH (highpivot), SPL (lowpivot), SPP (pivotdirection), SPD, (pivotbraks).
     """
