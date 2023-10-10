@@ -48,8 +48,8 @@ def sp(close, high, low, length=None, offset=None, **kwargs):
     df["z"] = (df["z"] != df["z"].shift()).astype(int).cumsum() * df["z"]
 
     grouped = df.groupby("z")
-    lph = grouped["sph"].transform("cummax").where(df["z"] < 0)  # .fillna(df["sph"])
-    lpl = grouped["spl"].transform("cummin").where(df["z"] > 0)  # .fillna(df["spl"])
+    lph = grouped["sph"].transform("cummax").where(df["z"] < 0).fillna(method="ffill")  # .fillna(df["sph"])
+    lpl = grouped["spl"].transform("cummin").where(df["z"] > 0).fillna(method="ffill")  # .fillna(df["spl"])
 
     sph = df["sph"].fillna(method="ffill")
     spl = df["spl"].fillna(method="ffill")
