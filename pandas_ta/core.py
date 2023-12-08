@@ -1275,6 +1275,15 @@ class AnalysisIndicators(BasePandasObject):
         result = sp(close=close, high=high, low=low, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def fractal(self, head=2, tail=2, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        highs = self._get_column(kwargs.pop("highs", "close"))
+        lows = self._get_column(kwargs.pop("lows", "close"))
+        result = fractal(close=close, high=high, low=low, highs=highs, lows=lows, head=head, tail=tail, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def smv(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = smv(close=close, length=length, offset=offset, **kwargs)
