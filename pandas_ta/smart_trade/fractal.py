@@ -5,7 +5,7 @@ from pandas_ta.trend import increasing, decreasing
 from pandas_ta.utils import get_offset, verify_series
 
 
-def fractal(close, high, low, highs, lows, head=2, tail=2, strict=True, offset=None, **kwargs):
+def fractal(close, high, low, highs, lows, head=2, tail=2, strict=True, use_close=True, offset=None, **kwargs):
     """Indicator: FRACTAL"""
     # Validate Arguments
     close = verify_series(close)
@@ -17,13 +17,12 @@ def fractal(close, high, low, highs, lows, head=2, tail=2, strict=True, offset=N
     highs = verify_series(highs)
     lows = verify_series(lows)
 
-    higherclose = increasing(close, length=tail, strict=strict, offset=head-1, asint=False) & decreasing(close, length=head, strict=strict, asint=False)
-    higherhigh = increasing(high, length=tail, strict=strict, offset=head-1, asint=False) & decreasing(high, length=head, strict=strict, asint=False)
-    lowerclose = decreasing(close, length=tail, strict=strict, offset=head-1, asint=False) & increasing(close, length=head, strict=strict, asint=False)
-    lowerlow = decreasing(low, length=tail, strict=strict, offset=head-1, asint=False) & increasing(close, length=head, strict=strict, asint=False)
+    sth = increasing(high, length=tail, strict=strict, offset=head-1, asint=False) & decreasing(high, length=head, strict=strict, asint=False)
+    stl = decreasing(low, length=tail, strict=strict, offset=head-1, asint=False) & increasing(close, length=head, strict=strict, asint=False)
 
-    sth = higherclose & higherhigh
-    stl = lowerclose & lowerlow
+    if use_close:
+        sth = sth & increasing(close, length=tail, strict=strict, offset=head-1, asint=False) & decreasing(close, length=head, strict=strict, asint=False)
+        stl = stl & decreasing(close, length=tail, strict=strict, offset=head-1, asint=False) & increasing(close, length=head, strict=strict, asint=False)
 
     h = highs.shift(head-1).where(sth).fillna(method="ffill")
     l = lows.shift(head-1).where(stl).fillna(method="ffill")
