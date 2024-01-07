@@ -13,14 +13,12 @@ def prepare_boundary(close, mode, u_bound, l_bound):
         return close * u_bound / 100, close * l_bound / 100
 
 
-def prepare(df, close, mode, u_bound, l_bound, upper_offset, lower_offset):
+def prepare(df, close, mode, u_bound, l_bound, upper_offset, lower_offset, upper_delta, lower_delta, l_offset,
+            u_offset):
     if df.empty:
         return
-    upper_delta, lower_delta = prepare_boundary(close, mode, u_bound, l_bound)
-    df["HLZ_HIGH"] = close + df["u_decay"].cumprod() * (
-                upper_delta - (upper_offset if mode == "abs" else close * upper_offset / 100))
-    df["HLZ_LOW"] = close - df["l_decay"].cumprod() * (
-                lower_delta - (lower_offset if mode == "abs" else close * lower_offset / 100))
+    df["HLZ_HIGH"] = close + df["u_decay"].cumprod() * (upper_delta)
+    df["HLZ_LOW"] = close - df["l_decay"].cumprod() * (lower_delta)
     broken = ((df["close"] > df["HLZ_HIGH"]).astype(int) + (df["close"] < df["HLZ_LOW"]).astype(
         int)).cumsum().shift().fillna(0)
     segment = df[broken == 0]
@@ -29,7 +27,23 @@ def prepare(df, close, mode, u_bound, l_bound, upper_offset, lower_offset):
         value = 1
     if segment["close"].iloc[-1] < segment["HLZ_LOW"].iloc[-1]:
         value = -1
-    return segment, df[broken != 0], segment["close"].iloc[-1], value
+
+    if value:
+        broken_close = segment["close"].iloc[-1]
+        upper_delta, lower_delta = prepare_boundary(broken_close, mode, u_bound, l_bound)
+        if value == 1:
+            upper_offset = 0
+            lower_offset += l_offset
+            lower_delta -= (lower_offset if mode == "abs" else broken_close * lower_offset / 100)
+        if value == -1:
+            lower_offset = 0
+            upper_offset += u_offset
+            upper_delta -= (upper_offset if mode == "abs" else broken_close * upper_offset / 100)
+    else:
+        broken_close = close
+        upper_delta = segment["HLZ_HIGH"].iloc[-1] - broken_close
+        lower_delta = broken_close - segment["HLZ_LOW"].iloc[-1]
+    return segment, df[broken != 0], broken_close, upper_delta, lower_delta, upper_offset, lower_offset, value
 
 
 def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, new=True, **kwargs):
@@ -74,15 +88,10 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, new=True, 
         if new:
             remaining = anchor_close[::]
             while not remaining.empty:
-                segment, remaining, broken_close, value = prepare(remaining, broken_close, mode, u_bound, l_bound,
-                                                                  upper_offset, lower_offset)
+                segment, remaining, broken_close, upper_delta, lower_delta, upper_offset, lower_offset, value = prepare(
+                    remaining, broken_close, mode, u_bound, l_bound, upper_offset, lower_offset, upper_delta,
+                    lower_delta, l_offset, u_offset)
                 segments.append(segment)
-                if value == 1:
-                    upper_offset = 0
-                    lower_offset += l_offset
-                else:
-                    lower_offset = 0
-                    upper_offset += u_offset
 
             adf = pd.concat(segments)
             adf["HLZ_BREAK"] = (adf["close"] > adf["HLZ_HIGH"]).astype(int) + (adf["close"] < adf["HLZ_LOW"]).astype(
