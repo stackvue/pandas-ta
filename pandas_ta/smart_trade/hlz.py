@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from pandas import DataFrame, Grouper
+
+import pandas as pd
+from pandas import DataFrame
 
 from pandas_ta.utils import get_offset, verify_series
 
@@ -11,7 +13,40 @@ def prepare_boundary(close, mode, u_bound, l_bound):
         return close * u_bound / 100, close * l_bound / 100
 
 
-def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, **kwargs):
+def prepare(df, close, mode, u_bound, l_bound, upper_offset, lower_offset, upper_delta, lower_delta, l_offset,
+            u_offset):
+    if df.empty:
+        return
+    df["HLZ_HIGH"] = close + df["u_decay"].cumprod() * (upper_delta)
+    df["HLZ_LOW"] = close - df["l_decay"].cumprod() * (lower_delta)
+    broken = ((df["close"] > df["HLZ_HIGH"]).astype(int) + (df["close"] < df["HLZ_LOW"]).astype(
+        int)).cumsum().shift().fillna(0)
+    segment = df[broken == 0]
+    value = 0
+    if segment["close"].iloc[-1] > segment["HLZ_HIGH"].iloc[-1]:
+        value = 1
+    if segment["close"].iloc[-1] < segment["HLZ_LOW"].iloc[-1]:
+        value = -1
+
+    if value:
+        broken_close = segment["close"].iloc[-1]
+        upper_delta, lower_delta = prepare_boundary(broken_close, mode, u_bound, l_bound)
+        if value == 1:
+            upper_offset = 0
+            lower_offset += l_offset
+            lower_delta -= (lower_offset if mode == "abs" else broken_close * lower_offset / 100)
+        if value == -1:
+            lower_offset = 0
+            upper_offset += u_offset
+            upper_delta -= (upper_offset if mode == "abs" else broken_close * upper_offset / 100)
+    else:
+        broken_close = close
+        upper_delta = segment["HLZ_HIGH"].iloc[-1] - broken_close
+        lower_delta = broken_close - segment["HLZ_LOW"].iloc[-1]
+    return segment, df[broken != 0], broken_close, upper_delta, lower_delta, upper_offset, lower_offset, value
+
+
+def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, new=True, **kwargs):
     """Indicator: HILO_ZONE (HILO_ZONE)"""
     # Validate Arguments
     close = verify_series(close)
@@ -36,48 +71,78 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, **kwargs):
     upper_delta, lower_delta = prepare_boundary(close.iloc[0], mode, u_bound, l_bound)
     seq = upper_offset = lower_offset = 0
     broken_close = prev_close = close.iloc[0]
-    add_zone = True
+    add_zone = not new
+    anchor_segments = []
+    # print(new, datetime.now())
+    df["u_decay"] = 1 - u_decay
+    df["l_decay"] = 1 - l_decay
+
     for anchor_name, anchor_close in anchor_group:
+        # print(new, anchor_name, datetime.now())
+        segments = []
         if intraday:
             # prev_date = close.first_valid_index().date()
             seq = upper_offset = lower_offset = 0
             upper_delta, lower_delta = prepare_boundary(anchor_close.iloc[0]["close"], mode, u_bound, l_bound)
             broken_close = prev_close = anchor_close.iloc[0]["close"]
-        for index, row in anchor_close.iterrows():
-            # if index.date() != prev_date:
-            #     if intraday:
-            #         broken_close = row["close"]
-            #     else:
-            #         broken_close = prev_close
-            #     upper_delta, lower_delta  = prepare_boundary(broken_close, mode, u_bound, l_bound)
-            upper_delta *= (1 - u_decay)
-            lower_delta *= (1 - l_decay)
-            upper = df.loc[index, "HLZ_HIGH"] = (broken_close + upper_delta)
-            lower = df.loc[index, "HLZ_LOW"] = broken_close - lower_delta
-            if not lower < row["close"] < upper:
-                add_zone = False
-                value = 1 if row["close"] >= upper else -1
-                if seq * value >= 0:
-                    seq += value
+        if new:
+            remaining = anchor_close[::]
+            while not remaining.empty:
+                segment, remaining, broken_close, upper_delta, lower_delta, upper_offset, lower_offset, value = prepare(
+                    remaining, broken_close, mode, u_bound, l_bound, upper_offset, lower_offset, upper_delta,
+                    lower_delta, l_offset, u_offset)
+                segments.append(segment)
+
+            adf = pd.concat(segments)
+            adf["HLZ_BREAK"] = (adf["close"] > adf["HLZ_HIGH"]).astype(int) + (adf["close"] < adf["HLZ_LOW"]).astype(
+                int) * -1
+            adf["HLZ_ZONE"] = adf["HLZ_BREAK"].where(adf["HLZ_BREAK"] != 0).fillna(method="ffill").fillna(0)
+            adf["HLZ_SEQ"] = (adf["HLZ_ZONE"] != adf["HLZ_ZONE"].shift()).astype(int).cumsum()
+            adf["HLZ_SEQ"] = adf["HLZ_BREAK"].groupby(adf["HLZ_SEQ"]).cumsum()
+            anchor_segments.append(adf)
+
+        else:
+            for index, row in anchor_close.iterrows():
+                # if index.date() != prev_date:
+                #     if intraday:
+                #         broken_close = row["close"]
+                #     else:
+                #         broken_close = prev_close
+                #     upper_delta, lower_delta  = prepare_boundary(broken_close, mode, u_bound, l_bound)
+                upper_delta *= (1 - u_decay)
+                lower_delta *= (1 - l_decay)
+                upper = df.loc[index, "HLZ_HIGH"] = (broken_close + upper_delta)
+                lower = df.loc[index, "HLZ_LOW"] = broken_close - lower_delta
+                if not lower < row["close"] < upper:
+                    add_zone = False
+                    value = 1 if row["close"] >= upper else -1
+                    if seq * value >= 0:
+                        seq += value
+                    else:
+                        seq = value
+                    df.loc[index, "HLZ_BREAK"] = value
+                    df.loc[index, "HLZ_ZONE"] = value
+                    df.loc[index, "HLZ_SEQ"] = seq
+                    upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
+                    if value == 1:
+                        upper_offset = 0
+                        lower_offset += l_offset
+                        lower_delta -= lower_offset if mode == "abs" else row["close"] * lower_offset / 100
+                    else:
+                        lower_offset = 0
+                        upper_offset += u_offset
+                        upper_delta -= upper_offset if mode == "abs" else row["close"] * upper_offset / 100
+                    broken_close = row["close"]
                 else:
-                    seq = value
-                df.loc[index, "HLZ_BREAK"] = value
-                df.loc[index, "HLZ_ZONE"] = value
-                df.loc[index, "HLZ_SEQ"] = seq
-                upper_delta, lower_delta = prepare_boundary(row["close"], mode, u_bound, l_bound)
-                if value == 1:
-                    upper_offset = 0
-                    lower_offset += l_offset
-                    lower_delta -= lower_offset if mode == "abs" else row["close"] * lower_offset / 100
-                else:
-                    lower_offset = 0
-                    upper_offset += u_offset
-                    upper_delta -= upper_offset if mode == "abs" else row["close"] * upper_offset / 100
-                broken_close = row["close"]
-            else:
-                df.loc[index, "HLZ_BREAK"] = 0
-            # prev_date = index.date()
-            # prev_close = row["close"]
+                    df.loc[index, "HLZ_BREAK"] = 0
+                # prev_date = index.date()
+                # prev_close = row["close"]
+        # print(new, anchor_name, datetime.now())
+
+    if new:
+        df = pd.concat(anchor_segments)
+
+    # print(new, datetime.now())
 
     if add_zone:
         df["HLZ_ZONE"] = 0
@@ -114,6 +179,9 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, **kwargs):
     df["HLZ_HIGH"].category = df["HLZ_LOW"].category = df["HLZ_BREAK"].category = df["HLZ_ZONE"].category = df[
         "HLZ_SEQ"].category = "smart-trade"
     df.drop('close', axis=1, inplace=True)
+    df.drop('u_decay', axis=1, inplace=True)
+    df.drop('l_decay', axis=1, inplace=True)
+    # print(new, datetime.now())
     return df
 
 
