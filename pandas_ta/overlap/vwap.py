@@ -14,7 +14,7 @@ def vwap(high, low, close, volume, anchor=None, offset=None, grouper=None, **kwa
     volume = verify_series(volume)
     anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
     grouper = verify_series(grouper)
-    anchors = [volume.index.to_period(anchor)]
+    anchors = [volume.index.tz_localize(None).to_period(anchor)]
     if grouper is not None:
         anchors.append(grouper)
     offset = get_offset(offset)
