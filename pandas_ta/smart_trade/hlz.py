@@ -67,7 +67,7 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, new=True, 
     df.name = f"HILO_ZONE"
     df.category = "smart-trade"
 
-    anchor_group = df.groupby(df.index.to_period(anchor))
+    anchor_group = df.groupby(df.index.tz_localize(None).to_period(anchor))
     upper_delta, lower_delta = prepare_boundary(close.iloc[0], mode, u_bound, l_bound)
     seq = upper_offset = lower_offset = 0
     broken_close = prev_close = close.iloc[0]
@@ -148,13 +148,13 @@ def hlz(close, u_bound, l_bound, mode=None, offset=None, anchor=None, new=True, 
         df["HLZ_ZONE"] = 0
         df["HLZ_SEQ"] = 0
     if intraday:
-        df["HLZ_ZONE"] = df["HLZ_ZONE"].groupby(df["HLZ_ZONE"].index.to_period(anchor)).fillna(method='ffill')
-        df["HLZ_SEQ"] = df["HLZ_SEQ"].groupby(df["HLZ_SEQ"].index.to_period(anchor)).fillna(method='ffill')
+        df["HLZ_ZONE"] = df["HLZ_ZONE"].groupby(df["HLZ_ZONE"].index.tz_localize(None).to_period(anchor)).fillna(method='ffill')
+        df["HLZ_SEQ"] = df["HLZ_SEQ"].groupby(df["HLZ_SEQ"].index.tz_localize(None).to_period(anchor)).fillna(method='ffill')
     else:
         df["HLZ_ZONE"].fillna(inplace=True, method='ffill')
         df["HLZ_SEQ"].fillna(inplace=True, method='ffill')
-        df["HLZ_ZONE"] = df["HLZ_ZONE"].groupby(df["HLZ_ZONE"].index.to_period(anchor)).fillna(method='bfill')
-        df["HLZ_SEQ"] = df["HLZ_SEQ"].groupby(df["HLZ_SEQ"].index.to_period(anchor)).fillna(method='bfill')
+        df["HLZ_ZONE"] = df["HLZ_ZONE"].groupby(df["HLZ_ZONE"].index.tz_localize(None).to_period(anchor)).fillna(method='bfill')
+        df["HLZ_SEQ"] = df["HLZ_SEQ"].groupby(df["HLZ_SEQ"].index.tz_localize(None).to_period(anchor)).fillna(method='bfill')
     df["HLZ_ZONE"].fillna(0, inplace=True)
     df["HLZ_SEQ"].fillna(0, inplace=True)
 
