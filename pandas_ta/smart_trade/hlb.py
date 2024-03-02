@@ -18,11 +18,11 @@ def hlb(high, low, start_candle=0, end_candle=0, anchor=None, offset=None, **kwa
     df.name = f"HILO_BLOCK"
     df.category = "smart-trade"
 
-    grouped = df.groupby(df.index.to_period(anchor))
+    grouped = df.groupby(df.index.tz_localize(None).to_period(anchor))
     block_size = kwargs.get("block_size", 0)
     if block_size:
         candle_number = (grouped.cumcount() / block_size).astype(int)
-        grouped = df.groupby([df.index.to_period(anchor), candle_number])
+        grouped = df.groupby([df.index.tz_localize(None).to_period(anchor), candle_number])
 
     candle_number = grouped.cumcount() + 1
 
