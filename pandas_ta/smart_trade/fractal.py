@@ -17,8 +17,8 @@ def fractal(close, high, low, highs, lows, head=2, tail=2, strict=True, use_clos
     highs = verify_series(highs)
     lows = verify_series(lows)
 
-    sth = increasing(high, length=tail, strict=strict, offset=head-1, asint=False) & decreasing(high, length=head, strict=strict, asint=False)
-    stl = decreasing(low, length=tail, strict=strict, offset=head-1, asint=False) & increasing(close, length=head, strict=strict, asint=False)
+    sth = increasing(high, length=tail-1, strict=strict, offset=head-1, asint=False) & decreasing(high, length=head-1, strict=strict, asint=False)
+    stl = decreasing(low, length=tail-1, strict=strict, offset=head-1, asint=False) & increasing(low, length=head-1, strict=strict, asint=False)
 
     if force_peak:
         sth = sth & (high.rolling(head + tail - 1).max() == high.shift(head - 1))
