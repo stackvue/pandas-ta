@@ -25,13 +25,13 @@ def fvg(open_, high, low, close, peak, mode, offset=None, **kwargs):
         active = ((closes > low) & (low > highs) & (highs > opens) & (seq == 3) & increasing(high, length=3, strict=True, asint=False))
         h = low.where(active)
         l = highs.where(active)
-        p = peak.groupby(active.astype(int).cumsum()).cummax().shift().where(active)
+        p = peak.groupby(active.astype(int).cumsum()).cummax().shift().where(active).mask(active.shift().fillna(False))
     elif mode < 0:
         lows = low.shift(2)
         active = ((closes < high) & (high < lows) & (lows < opens) & (seq == -3) & decreasing(low, length=3, strict=True, asint=False))
         h = lows.where(active)
         l = high.where(active)
-        p = peak.groupby(active.astype(int).cumsum()).cummin().shift().where(active)
+        p = peak.groupby(active.astype(int).cumsum()).cummin().shift().where(active).mask(active.shift().fillna(False))
 
     h.fillna(method="ffill", inplace=True)
     l.fillna(method="ffill", inplace=True)
