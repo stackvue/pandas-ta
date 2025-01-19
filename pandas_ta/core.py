@@ -1285,7 +1285,7 @@ class AnalysisIndicators(BasePandasObject):
         return self._post_process(result, **kwargs)
 
     def fvg(self, mode=0, offset=None, **kwargs):
-        open_ = self._get_column(kwargs.pop("oprn", "open"))
+        open_ = self._get_column(kwargs.pop("open", "open"))
         close = self._get_column(kwargs.pop("close", "close"))
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
