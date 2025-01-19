@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from math import copysign
+
 from pandas import DataFrame
 
 from pandas_ta.trend import increasing, decreasing
@@ -8,23 +10,25 @@ from pandas_ta.utils import get_offset, verify_series
 def fvg(open_, high, low, close, peak, mode, offset=None, **kwargs):
     """Indicator: FVG"""
     # Validate Arguments
-    open_ = verify_series(open_).shift()
-    close = verify_series(close).shift()
+    opens = verify_series(open_).shift()
+    closes = verify_series(close).shift()
     high = verify_series(high)
     low = verify_series(low)
     peak = verify_series(peak)
+    seq = (close - open_).apply(lambda x: copysign(1, x)).rolling(3).sum()
+
 
     offset = get_offset(offset)
     mode = int(mode)
     if mode > 0:
         highs = high.shift(2)
-        active = ((close > low) & (low > highs) & (highs > open_) & increasing(high, length=3, strict=True, asint=False))
+        active = ((closes > low) & (low > highs) & (highs > opens) & (seq == 3) & increasing(high, length=3, strict=True, asint=False))
         h = low.where(active)
         l = highs.where(active)
         p = peak.groupby(active.astype(int).cumsum()).cummax()
     elif mode < 0:
         lows = low.shift(2)
-        active = ((close < high) & (high < lows) & (lows < open_) & decreasing(low, length=3, strict=True, asint=False))
+        active = ((closes < high) & (high < lows) & (lows < opens) & (seq == -3) & decreasing(low, length=3, strict=True, asint=False))
         h = lows.where(active)
         l = high.where(active)
         p = peak.groupby(active.astype(int).cumsum()).cummin()
