@@ -25,33 +25,39 @@ def fvg(open_, high, low, close, peak, mode, offset=None, **kwargs):
         active = ((closes > low) & (low > highs) & (highs > opens) & (seq == 3) & increasing(high, length=3, strict=True, asint=False))
         h = low.where(active)
         l = highs.where(active)
+        w = (h - l) / (closes - opens)
         p = peak.groupby(active.astype(int).cumsum()).cummax().shift().where(active).mask(active.shift().fillna(False))
     elif mode < 0:
         lows = low.shift(2)
         active = ((closes < high) & (high < lows) & (lows < opens) & (seq == -3) & decreasing(low, length=3, strict=True, asint=False))
         h = lows.where(active)
         l = high.where(active)
+        w = (h - l) / (opens - closes)
         p = peak.groupby(active.astype(int).cumsum()).cummin().shift().where(active).mask(active.shift().fillna(False))
 
     h.fillna(method="ffill", inplace=True)
     l.fillna(method="ffill", inplace=True)
     p.fillna(method="ffill", inplace=True)
+    w.fillna(method="ffill", inplace=True)
 
     # Offset
     if offset != 0:
         h = h.shift(offset)
         l = l.shift(offset)
         p = p.shift(offset)
+        w = p.shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:
         h.fillna(kwargs["fillna"], inplace=True)
         l.fillna(kwargs["fillna"], inplace=True)
         p.fillna(kwargs["fillna"], inplace=True)
+        w.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
         h.fillna(method=kwargs["fill_method"], inplace=True)
         l.fillna(method=kwargs["fill_method"], inplace=True)
         p.fillna(method=kwargs["fill_method"], inplace=True)
+        w.fillna(method=kwargs["fill_method"], inplace=True)
 
     # Name & Category
     h.name = f"FVGH_{mode}"
@@ -60,11 +66,14 @@ def fvg(open_, high, low, close, peak, mode, offset=None, **kwargs):
     l.category = "smart-trade"
     p.name = f"PVGP_{mode}"
     p.category = "smart-trade"
+    w.name = f"PVGW_{mode}"
+    w.category = "smart-trade"
 
     df = DataFrame({
         f"FVGH_{mode}": h,
         f"FVGL_{mode}": l,
         f"FVGP_{mode}": p,
+        f"FVGW_{mode}": w,
     }, index=close.index)
 
     df.name = f"FVG_{mode}"
