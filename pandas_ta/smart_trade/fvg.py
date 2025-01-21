@@ -7,7 +7,7 @@ from pandas_ta.trend import increasing, decreasing
 from pandas_ta.utils import get_offset, verify_series
 
 
-def fvg(open_, high, low, close, peak, mode, offset=None, **kwargs):
+def fvg(open_, high, low, close, peak, mode, merge=True, offset=None, **kwargs):
     """Indicator: FVG"""
     # Validate Arguments
     opens = verify_series(open_).shift()
@@ -25,6 +25,8 @@ def fvg(open_, high, low, close, peak, mode, offset=None, **kwargs):
         active = ((closes > low) & (low > highs) & (highs > opens) & (seq == 3) & increasing(high, length=3, strict=True, asint=False))
         h = low.where(active)
         l = highs.where(active)
+        if merge:
+            l = l.where(l.shift().isna())
         w = (h - l) / (closes - opens)
         p = peak.groupby(active.astype(int).cumsum()).cummax().shift().where(active).mask(active.shift().fillna(False))
     elif mode < 0:
@@ -32,6 +34,8 @@ def fvg(open_, high, low, close, peak, mode, offset=None, **kwargs):
         active = ((closes < high) & (high < lows) & (lows < opens) & (seq == -3) & decreasing(low, length=3, strict=True, asint=False))
         h = lows.where(active)
         l = high.where(active)
+        if merge:
+            h = h.where(h.shift().isna())
         w = (h - l) / (opens - closes)
         p = peak.groupby(active.astype(int).cumsum()).cummin().shift().where(active).mask(active.shift().fillna(False))
 
