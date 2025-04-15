@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, Pool
-from pathlib import Path
-from time import perf_counter
-from typing import List, Tuple
 from warnings import simplefilter
 
 import pandas as pd
@@ -12,19 +9,18 @@ from numpy import ndarray as npNdarray
 from pandas.core.base import PandasObject
 
 from pandas_ta import Category, Imports, version
-from pandas_ta.candles.cdl_pattern import ALL_PATTERNS
 from pandas_ta.candles import *
+from pandas_ta.candles.cdl_pattern import ALL_PATTERNS
 from pandas_ta.cycles import *
 from pandas_ta.momentum import *
 from pandas_ta.overlap import *
-from pandas_ta.performance import *
+from pandas_ta.smart_trade import *
+from pandas_ta.smart_trade.hawk import hawk
 from pandas_ta.statistics import *
 from pandas_ta.trend import *
+from pandas_ta.utils import *
 from pandas_ta.volatility import *
 from pandas_ta.volume import *
-from pandas_ta.utils import *
-from pandas_ta.smart_trade import *
-
 
 df = pd.DataFrame()
 
@@ -1251,6 +1247,11 @@ class AnalysisIndicators(BasePandasObject):
         result = hlz(close=close, u_bound=u_bound, l_bound=l_bound, mode=mode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def hawk(self, kappa, lookback, adx_series, adx_threshold, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = hawk(close, kappa, lookback, adx_series, adx_threshold)
+        return self._post_process(result, **kwargs)
+
     def az(self, u_bound=None, l_bound=None, mode=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = az(close=close, u_bound=u_bound, l_bound=l_bound, mode=mode, offset=offset, **kwargs)
@@ -1281,7 +1282,8 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         highs = self._get_column(kwargs.pop("highs", "close"))
         lows = self._get_column(kwargs.pop("lows", "close"))
-        result = fractal(close=close, high=high, low=low, highs=highs, lows=lows, head=head, tail=tail, offset=offset, **kwargs)
+        result = fractal(close=close, high=high, low=low, highs=highs, lows=lows, head=head, tail=tail, offset=offset,
+                         **kwargs)
         return self._post_process(result, **kwargs)
 
     def smv(self, length=None, offset=None, **kwargs):
