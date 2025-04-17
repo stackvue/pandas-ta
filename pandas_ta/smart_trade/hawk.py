@@ -4,7 +4,7 @@ from pandas import Series, DataFrame
 from pandas_ta.utils import verify_series
 
 
-def hawk(high, low, close,  kappa, lookback, adx_threshold, adx_window):
+def hawk(high, low, close, kappa, lookback, adx_threshold, adx_window, **kwargs):
     high = verify_series(high)
     low = verify_series(low)
     close = verify_series(close)
@@ -111,7 +111,7 @@ class IndicatorMixin:
 
     @staticmethod
     def _true_range(
-        high: Series, low: Series, prev_close: Series
+            high: Series, low: Series, prev_close: Series
     ) -> Series:
         tr1 = high - low
         tr2 = (high - prev_close).abs()
@@ -146,12 +146,12 @@ class ADXIndicator(IndicatorMixin):
     """
 
     def __init__(
-        self,
-        high: Series,
-        low: Series,
-        close: Series,
-        window: int = 14,
-        fillna: bool = False,
+            self,
+            high: Series,
+            low: Series,
+            close: Series,
+            window: int = 14,
+            fillna: bool = False,
     ):
         self._high = high
         self._low = low
@@ -173,14 +173,14 @@ class ADXIndicator(IndicatorMixin):
 
         self._trs_initial = np.zeros(self._window - 1)
         self._trs = np.zeros(len(self._close) - (self._window - 1))
-        self._trs[0] = diff_directional_movement.dropna().iloc[0 : self._window].sum()
+        self._trs[0] = diff_directional_movement.dropna().iloc[0: self._window].sum()
         diff_directional_movement = diff_directional_movement.reset_index(drop=True)
 
         for i in range(1, len(self._trs) - 1):
             self._trs[i] = (
-                self._trs[i - 1]
-                - (self._trs[i - 1] / float(self._window))
-                + diff_directional_movement[self._window + i]
+                    self._trs[i - 1]
+                    - (self._trs[i - 1] / float(self._window))
+                    + diff_directional_movement[self._window + i]
             )
 
         diff_up = self._high - self._high.shift(1)
@@ -190,27 +190,27 @@ class ADXIndicator(IndicatorMixin):
         neg = abs(((diff_down > diff_up) & (diff_down > 0)) * diff_down)
 
         self._dip = np.zeros(len(self._close) - (self._window - 1))
-        self._dip[0] = pos.dropna().iloc[0 : self._window].sum()
+        self._dip[0] = pos.dropna().iloc[0: self._window].sum()
 
         pos = pos.reset_index(drop=True)
 
         for i in range(1, len(self._dip) - 1):
             self._dip[i] = (
-                self._dip[i - 1]
-                - (self._dip[i - 1] / float(self._window))
-                + pos[self._window + i]
+                    self._dip[i - 1]
+                    - (self._dip[i - 1] / float(self._window))
+                    + pos[self._window + i]
             )
 
         self._din = np.zeros(len(self._close) - (self._window - 1))
-        self._din[0] = neg.dropna().iloc[0 : self._window].sum()
+        self._din[0] = neg.dropna().iloc[0: self._window].sum()
 
         neg = neg.reset_index(drop=True)
 
         for i in range(1, len(self._din) - 1):
             self._din[i] = (
-                self._din[i - 1]
-                - (self._din[i - 1] / float(self._window))
-                + neg[self._window + i]
+                    self._din[i - 1]
+                    - (self._din[i - 1] / float(self._window))
+                    + neg[self._window + i]
             )
 
     def adx(self) -> Series:
@@ -249,12 +249,12 @@ class ADXIndicator(IndicatorMixin):
                 directional_index[idx] = 0
 
         adx_series = np.zeros(len(self._trs))
-        adx_series[self._window] = directional_index[0 : self._window].mean()
+        adx_series[self._window] = directional_index[0: self._window].mean()
 
         for i in range(self._window + 1, len(adx_series)):
             adx_series[i] = (
-                (adx_series[i - 1] * (self._window - 1)) + directional_index[i - 1]
-            ) / float(self._window)
+                                    (adx_series[i - 1] * (self._window - 1)) + directional_index[i - 1]
+                            ) / float(self._window)
 
         adx_series = np.concatenate((self._trs_initial, adx_series), axis=0)
         adx_series = Series(data=adx_series, index=self._close.index)
@@ -303,6 +303,7 @@ class ADXIndicator(IndicatorMixin):
         )
 
         return Series(adx_neg_series, name="adx_neg")
+
 
 def _get_min_max(series1: Series, series2: Series, function: str = "min"):
     """Find min or max value between two lists for each index"""
