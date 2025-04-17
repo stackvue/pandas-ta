@@ -1,14 +1,17 @@
 import numpy as np
-from pandas import Series
+from pandas import Series, DataFrame
 
-from pandas_ta import verify_series
+from pandas_ta.utils import verify_series
 
 
 def hawk(close, kappa, lookback, adx, adx_threshold):
     close = verify_series(close)
+    adx = verify_series(adx)
     v_hawk = hawkes_process(close, kappa)
     signals = vol_signal(close, v_hawk, lookback)
-    return get_position_series(signals, adx, adx_threshold)
+    positions = get_position_series(signals, adx, adx_threshold)
+    df = DataFrame({"signals": positions}, index=close.index)
+    return df
 
 
 def hawkes_process(data: Series, kappa: float) -> Series:
@@ -26,7 +29,7 @@ def hawkes_process(data: Series, kappa: float) -> Series:
     return Series(y, index=data.index) * kappa
 
 
-def vol_signal(close: Series, vol_hawk: Series, lookback: int) -> np.ndarray:
+def vol_signal(close: Series, vol_hawk: Series, lookback: int) -> Series:
     """
     Generate a trading signal from a close price series and a hawkes-transformed volatility series.
     In this version the trade condition is inverted so that:
@@ -61,7 +64,7 @@ def vol_signal(close: Series, vol_hawk: Series, lookback: int) -> np.ndarray:
 
         signal[i] = curr_sig
 
-    return signal
+    return Series(signal, index=close.index)
 
 
 def get_position_series(signal: Series, adx: Series, adx_threshold: float = 3.0) -> Series:

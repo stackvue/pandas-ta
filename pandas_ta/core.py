@@ -1249,6 +1249,7 @@ class AnalysisIndicators(BasePandasObject):
 
     def hawk(self, kappa, lookback, adx_series, adx_threshold, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
+        adx_series = self._get_column(adx_series)
         result = hawk(close, kappa, lookback, adx_series, adx_threshold)
         return self._post_process(result, **kwargs)
 
