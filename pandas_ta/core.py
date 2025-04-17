@@ -1247,10 +1247,11 @@ class AnalysisIndicators(BasePandasObject):
         result = hlz(close=close, u_bound=u_bound, l_bound=l_bound, mode=mode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
-    def hawk(self, kappa, lookback, adx_series, adx_threshold, **kwargs):
+    def hawk(self, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        adx_series = self._get_column(adx_series)
-        result = hawk(close, kappa, lookback, adx_series, adx_threshold)
+        result = hawk(high, low, close, **kwargs)
         return self._post_process(result, **kwargs)
 
     def az(self, u_bound=None, l_bound=None, mode=None, offset=None, **kwargs):
