@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, Pool
+from pathlib import Path
+from time import perf_counter
+from typing import List, Tuple
 from warnings import simplefilter
 
 import pandas as pd
@@ -14,8 +17,8 @@ from pandas_ta.candles.cdl_pattern import ALL_PATTERNS
 from pandas_ta.cycles import *
 from pandas_ta.momentum import *
 from pandas_ta.overlap import *
+from pandas_ta.performance import *
 from pandas_ta.smart_trade import *
-from pandas_ta.smart_trade.hawk import hawk
 from pandas_ta.statistics import *
 from pandas_ta.trend import *
 from pandas_ta.utils import *
