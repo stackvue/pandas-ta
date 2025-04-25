@@ -13,7 +13,7 @@ def hawk(high, low, close, kappa, lookback, adx_threshold, adx_window, **kwargs)
     v_hawk = hawkes_process(close, kappa)
     signals = vol_signal(close, v_hawk, lookback)
     positions = get_position_series(signals, adx, adx_threshold)
-    df = DataFrame({"signals": positions}, index=close.index)
+    df = DataFrame({"signals": signals, "positions": positions}, index=close.index)
     return df
 
 
