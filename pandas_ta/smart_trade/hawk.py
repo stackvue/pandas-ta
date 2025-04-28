@@ -10,10 +10,11 @@ def hawk(high, low, close, kappa, lookback, adx_threshold, adx_window, **kwargs)
     close = verify_series(close)
     adx_indicator = ADXIndicator(high=high, low=low, close=close, window=adx_window, fillna=True)
     adx = adx_indicator.adx()
-    v_hawk = hawkes_process(close, kappa)
+    returns = np.abs(np.log(close.diff())).fillna(method="bfill")
+    v_hawk = hawkes_process(returns, kappa)
     signals = vol_signal(close, v_hawk, lookback)
     positions = get_position_series(signals, adx, adx_threshold)
-    df = DataFrame({"signals": signals, "positions": positions}, index=close.index)
+    df = DataFrame({"adx": adx, "v_hawk": v_hawk, "signals": signals, "positions": positions}, index=close.index)
     return df
 
 
