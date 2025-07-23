@@ -1237,7 +1237,8 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result = cpr(high=high, low=low, close=close, offset=offset, **kwargs)
+        frequency = kwargs.pop("frequency", "D")
+        result = cpr(high=high, low=low, close=close, frequency=frequency, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def oc(self, step=None, step_count=0, offset=None, **kwargs):
