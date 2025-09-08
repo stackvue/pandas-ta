@@ -11,7 +11,7 @@ def cpr(high, low, close, offset, frequency='D', **kwargs):
     offset = get_offset(offset)
 
     df = DataFrame({"high": high, "low": low, "close": close})
-    df.reset_index(inplace=True)
+    df.reset_index(inplace=True, names="candle_time")
     df.set_index("candle_time", inplace=True, drop=False)
 
     cpr_df = df.resample(frequency, label='left', closed='left').agg(
